@@ -132,7 +132,7 @@ export default function AdminDashboard({
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[400px_1fr]">
       {/* הוספת לקוח — עם אישור הסכמה */}
-      <section className="h-fit rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
+      <section className="h-fit min-w-0 rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-extrabold text-crust-900">הוספת לקוח למועדון</h2>
 
         {/* החלפת מצב */}
@@ -215,7 +215,7 @@ export default function AdminDashboard({
       </section>
 
       {/* רשימת לקוחות */}
-      <section>
+      <section className="min-w-0">
         <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
           {[
             { icon: "👥", value: stats.total, label: "חברים במועדון" },
@@ -247,7 +247,7 @@ export default function AdminDashboard({
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm [&_td]:whitespace-nowrap">
                 <thead>
                   <tr className="text-xs text-crust-700/50 [&>th]:px-4 [&>th]:py-3 [&>th]:text-start [&>th]:font-semibold">
                     <th>מס׳ חבר</th>

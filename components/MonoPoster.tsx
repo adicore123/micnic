@@ -70,7 +70,7 @@ export default function MonoPoster({
 
             <div aria-hidden="true" className="mt-5 border-t-4 border-double border-black" />
 
-            <StyledQr data={link} logo={settings.logo} size={850} displaySize={280} mono onReady={setQr} className="mx-auto mt-6" />
+            <StyledQr data={link} logo={settings.logo} size={850} displaySize="min(280px, 74vw)" mono onReady={setQr} className="mx-auto mt-6" />
 
             <p className="mt-6 text-xl font-extrabold text-black">{isClub ? "סרקו והצטרפו עכשיו" : "סרקו וצפו בתפריט"}</p>
             <div className="mx-auto mt-3 w-fit rounded-xl border-2 border-black px-6 py-2.5 text-lg font-extrabold text-black">

@@ -54,10 +54,18 @@ async function importLocalData(cols: {
 
 const SETTINGS_ID = "main";
 
+/** מנקה את _id של MongoDB — אובייקט ObjectId (עם toJSON) אסור לו להגיע לרכיבי לקוח */
+function stripId<T extends object>(doc: T | null): T | null {
+  if (!doc) return null;
+  const { _id: _removed, ...clean } = doc as T & { _id?: unknown };
+  return clean as T;
+}
+
 export const mongoStore: Store = {
   async listCustomers() {
     const { customers } = await collections();
-    return customers.find().sort({ createdAt: -1 }).toArray();
+    const docs = await customers.find().sort({ createdAt: -1 }).toArray();
+    return docs.map((doc) => stripId(doc)!);
   },
 
   async addCustomer(input: NewCustomer) {
@@ -73,7 +81,8 @@ export const mongoStore: Store = {
       consentAt: now,
     };
     await customers.insertOne(customer);
-    return customer;
+    // insertOne מוסיף _id לאובייקט שהועבר — מחזירים עותק נקי
+    return { ...customer };
   },
 
   async deleteCustomer(id) {
@@ -83,21 +92,22 @@ export const mongoStore: Store = {
 
   async findCustomerByPhone(phone) {
     const { customers } = await collections();
-    return customers.findOne({ phone });
+    return stripId(await customers.findOne({ phone }));
   },
 
   async findCustomerById(id) {
     const { customers } = await collections();
-    return customers.findOne({ id });
+    return stripId(await customers.findOne({ id }));
   },
 
   async updateCustomer(id, changes) {
     const { customers } = await collections();
-    return customers.findOneAndUpdate(
+    const updated = await customers.findOneAndUpdate(
       { id },
       { $set: { name: changes.name, phone: changes.phone } },
       { returnDocument: "after" },
     );
+    return stripId(updated);
   },
 
   async getSettings() {

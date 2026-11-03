@@ -155,9 +155,9 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
               </h4>
               <p className="relative mt-1 text-xl font-extrabold text-cream-50 sm:text-2xl">מועדון הלקוחות</p>
 
-              <div className="relative mx-auto mt-7 w-fit rounded-[1.75rem] bg-cream-50 p-5 shadow-inner sm:p-6">
+              <div className="relative mx-auto mt-7 w-fit rounded-[1.75rem] bg-cream-50 p-4 shadow-inner sm:p-6">
                 {link ? (
-                  <StyledQr data={link} logo={settings.logo} size={850} displaySize={270} onReady={setClubQr} />
+                  <StyledQr data={link} logo={settings.logo} size={850} displaySize="min(270px, 72vw)" onReady={setClubQr} />
                 ) : (
                   <div className="h-[270px] w-[270px] animate-pulse rounded-2xl bg-cream-200" />
                 )}
@@ -262,9 +262,9 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
               </h4>
               <p className="relative mt-1 text-xl font-extrabold text-cream-50 sm:text-2xl">התפריט הדיגיטלי</p>
 
-              <div className="relative mx-auto mt-7 w-fit rounded-[1.75rem] bg-cream-50 p-5 shadow-inner sm:p-6">
+              <div className="relative mx-auto mt-7 w-fit rounded-[1.75rem] bg-cream-50 p-4 shadow-inner sm:p-6">
                 {menuLink ? (
-                  <StyledQr data={menuLink} logo={settings.logo} size={850} displaySize={270} onReady={setMenuQr} />
+                  <StyledQr data={menuLink} logo={settings.logo} size={850} displaySize="min(270px, 72vw)" onReady={setMenuQr} />
                 ) : (
                   <div className="h-[270px] w-[270px] animate-pulse rounded-2xl bg-cream-200" />
                 )}
