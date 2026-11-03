@@ -21,6 +21,17 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [copied, setCopied] = useState<"invite" | "link" | null>(null);
   const [mono, setMono] = useState<PosterMode | null>(null);
+  // פריסות ה-A4 הכבדות (קנבס 850px) נבנות רק ברגע ההדפסה בפועל
+  const [printArm, setPrintArm] = useState<PosterMode | null>(null);
+
+  useEffect(() => {
+    if (!printArm) return;
+    const t = setTimeout(() => {
+      window.print();
+      setPrintArm(null);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [printArm]);
 
   // בהדפסה מהעמוד הזה מודפס רק הפוסטר שנבחר
   useEffect(() => {
@@ -51,11 +62,9 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
     setTimeout(() => setCopied(null), 2500);
   }
 
-  /** הדפסה צבעונית של פוסטר אחד ספציפי — מסמן אותו כיעד ההדפסה ופותח את הדיאלוג */
+  /** הדפסה צבעונית של פוסטר אחד — מרנדר את פריסת ה-A4 שלו ואז פותח את הדיאלוג */
   function printColor(which: PosterMode) {
-    document.querySelectorAll(".print-target").forEach((el) => el.classList.remove("print-target"));
-    document.querySelector(`[data-poster="${which}"]`)?.classList.add("print-target");
-    window.print();
+    setPrintArm(which);
   }
 
   const zoneHeader = (title: string, subtitle: string) => (
@@ -136,8 +145,8 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
         </section>
 
         {/* פוסטר המועדון — QR יחיד להצטרפות */}
-        <section data-poster="club">
-          <div className={`force-colors ${mono ? "" : ""}`}>
+        <section>
+          <div className={`force-colors ${printArm === "club" ? "print-target" : ""}`}>
             <div className="print:hidden relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10">
               <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-tomato-500/25 blur-[100px]" />
 
@@ -170,10 +179,12 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
               <p className="relative mt-4 text-sm text-cream-200/50">ההצטרפות לוקחת 10 שניות 📱</p>
             </div>
 
-            {/* פריסת A4 מלאה — הדפסה בלבד */}
-            <div className="hidden print:block">
-              <PosterA4 settings={settings} mode="club" link={link} />
-            </div>
+            {/* פריסת A4 מלאה — נבנית רק בעת הדפסה */}
+            {printArm === "club" && (
+              <div className="hidden print:block">
+                <PosterA4 settings={settings} mode="club" link={link} />
+              </div>
+            )}
           </div>
 
           <div className="no-print mt-4 flex flex-wrap justify-center gap-3">
@@ -246,8 +257,8 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
         </section>
 
         {/* פוסטר התפריט — QR יחיד לתפריט */}
-        <section data-poster="menu">
-          <div className="force-colors">
+        <section>
+          <div className={`force-colors ${printArm === "menu" ? "print-target" : ""}`}>
             <div className="print:hidden relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10">
               <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-basil-500/25 blur-[100px]" />
 
@@ -277,10 +288,12 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
               <p className="relative mt-4 text-sm text-cream-200/50">עיינו, בחרו והזמינו 🍕</p>
             </div>
 
-            {/* פריסת A4 מלאה — הדפסה בלבד */}
-            <div className="hidden print:block">
-              <PosterA4 settings={settings} mode="menu" link={menuLink} />
-            </div>
+            {/* פריסת A4 מלאה — נבנית רק בעת הדפסה */}
+            {printArm === "menu" && (
+              <div className="hidden print:block">
+                <PosterA4 settings={settings} mode="menu" link={menuLink} />
+              </div>
+            )}
           </div>
 
           <div className="no-print mt-4 flex flex-wrap justify-center gap-3">
