@@ -106,6 +106,22 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
             {menuUrl}
           </p>
         )}
+
+        <div className="mt-4 rounded-xl bg-cream-100/70 p-4 ring-1 ring-crust-700/10">
+          <p className="text-sm font-bold text-crust-800">✏️ עריכת התפריט — לצוות בלבד</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-crust-700/60">
+            התפריט שהלקוחות רואים נעול ולא ניתן לעריכה. שינויי מנות ומחירים מתבצעים בעורך הפנימי,
+            ולאחר מכן בוחרים בו ב"ייצוא ללקוחות" ושולחים לנו את הקובץ לעדכון.
+          </p>
+          <a
+            href="/menu-editor.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2.5 inline-flex rounded-xl border border-crust-700/20 bg-white px-4 py-2 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-50 active:scale-[0.99]"
+          >
+            פתיחת עורך התפריט
+          </a>
+        </div>
       </section>
 
       {/* QR לשולחנות */}
