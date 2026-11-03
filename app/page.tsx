@@ -38,6 +38,10 @@ export default async function HomePage() {
 
         <footer className="text-center text-xs text-cream-200/35">
           מגישים אהבה ופיצה · {settings.businessName} 🍕 ·{" "}
+          <a href="/menu" className="underline underline-offset-4 transition hover:text-cheese-300">
+            התפריט הדיגיטלי
+          </a>{" "}
+          ·{" "}
           <a href="/admin" className="underline underline-offset-4 transition hover:text-cheese-300">
             כניסת צוות
           </a>

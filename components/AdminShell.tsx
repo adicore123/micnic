@@ -22,6 +22,15 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    href: "/admin/menu",
+    label: "תפריט דיגיטלי",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2.5 2.5 0 01-5 0V3M4.5 10v11M20 3c-2 1-3 3.2-3 6v5h3v7M20 3v11" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/share",
     label: "שיתוף ופוסטר",
     icon: (
