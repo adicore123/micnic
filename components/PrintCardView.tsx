@@ -30,9 +30,9 @@ export default function PrintCardView({ customer, settings }: { customer: Custom
       <div className="w-full max-w-sm rounded-2xl border-2 border-crust-900/10 bg-white p-6 text-center shadow-md">
         <div className="flex items-center gap-3 text-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={settings.logo} alt="" className="h-14 w-14 rounded-full object-cover ring-2 ring-tomato-500/25" />
+          <img src={settings.logo} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover shadow-md ring-2 ring-tomato-500/40" />
           <div className="min-w-0">
-            <div className="truncate text-base font-extrabold text-crust-900">{settings.businessName}</div>
+            <div className="truncate text-lg font-extrabold text-crust-900">{settings.businessName}</div>
             <div className="text-xs font-semibold text-crust-700/60">כרטיס חבר מועדון לקוחות</div>
           </div>
         </div>

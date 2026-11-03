@@ -21,7 +21,7 @@ export default function MembershipCard({
 
       <div className="relative flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={settings.logo} alt="" className="h-12 w-12 rounded-full object-cover ring-1 ring-cheese-400/40" />
+        <img src={settings.logo} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover shadow-md ring-2 ring-cheese-400/50" />
         <div className="min-w-0">
           <div className="truncate text-sm font-bold text-cheese-300">{settings.businessName}</div>
           <div className="text-xs text-cream-200/60">כרטיס חבר מועדון</div>

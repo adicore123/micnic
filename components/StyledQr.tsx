@@ -7,12 +7,14 @@ type Props = {
   data: string;
   logo: string;
   size?: number;
+  /** יחס גודל הלוגו במרכז הקוד (0-1) */
+  logoRatio?: number;
   onReady?: (qr: QRCodeStyling) => void;
   className?: string;
 };
 
 /** קוד QR מעוצב במיוחד — נקודות מעוגלות בגרדיאנט פחם-אדום, לוגו העסק במרכז */
-export default function StyledQr({ data, logo, size = 280, onReady, className }: Props) {
+export default function StyledQr({ data, logo, size = 280, logoRatio = 0.42, onReady, className }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function StyledQr({ data, logo, size = 280, onReady, className }:
       image: logo || undefined,
       margin: 0,
       qrOptions: { errorCorrectionLevel: "H" },
-      imageOptions: { crossOrigin: "anonymous", margin: 8, imageSize: 0.38 },
+      imageOptions: { crossOrigin: "anonymous", margin: 6, imageSize: logoRatio },
       dotsOptions: {
         type: "rounded",
         gradient: {
@@ -48,7 +50,7 @@ export default function StyledQr({ data, logo, size = 280, onReady, className }:
     return () => {
       if (ref.current) ref.current.innerHTML = "";
     };
-  }, [data, logo, size, onReady]);
+  }, [data, logo, size, logoRatio, onReady]);
 
   return <div ref={ref} className={className} style={{ width: size, height: size }} />;
 }

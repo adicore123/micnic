@@ -20,10 +20,13 @@ export default async function HomePage() {
 
       <main className="relative mx-auto flex min-h-screen w-full max-w-lg flex-col items-center justify-center gap-10 px-4 py-12">
         <header className="anim-fade-up text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={settings.logo} alt="" className="mx-auto h-20 w-20 rounded-full object-cover ring-2 ring-cheese-400/40" />
-          <h1 className="mt-5 text-4xl font-extrabold leading-tight text-cream-50">מועדון הלקוחות</h1>
-          <p className="mt-1 text-lg font-bold text-cheese-300">{settings.businessName}</p>
+          <div className="relative mx-auto w-fit">
+            <div aria-hidden="true" className="absolute inset-0 -m-3 rounded-full bg-cheese-400/20 blur-2xl" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={settings.logo} alt="" className="relative h-28 w-28 rounded-full object-cover shadow-2xl ring-4 ring-cheese-400/50" />
+          </div>
+          <h1 className="mt-6 text-4xl font-extrabold leading-tight text-cream-50">מועדון הלקוחות</h1>
+          <p className="mt-1 text-xl font-extrabold text-cheese-300">{settings.businessName}</p>
           <div className="mx-auto mt-5 w-fit rounded-full bg-cheese-400/15 px-6 py-2.5 font-bold text-cheese-300 ring-1 ring-cheese-400/30">
             🎁 {settings.discountPercent}% הנחה לחברי המועדון
           </div>

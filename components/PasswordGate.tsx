@@ -44,7 +44,7 @@ export default function PasswordGate() {
       >
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="" className="h-16 w-16 anim-float" />
+          <img src="/logo.svg" alt="" className="h-20 w-20 rounded-full object-cover shadow-xl ring-2 ring-cheese-400/50 anim-float" />
           <h1 className="text-xl font-extrabold text-cream-50">ניהול מועדון הלקוחות</h1>
           <p className="text-sm text-cream-200/60">אזור הצוות של מיקניק — הזינו סיסמה לכניסה</p>
         </div>

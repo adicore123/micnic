@@ -86,11 +86,11 @@ export default function AdminShell({
   );
 
   const brand = (
-    <div className="flex items-center gap-3 px-5 pb-5">
+    <div className="flex items-center gap-3.5 px-5 pb-5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logo} alt="" className="h-11 w-11 rounded-full object-cover ring-1 ring-cheese-400/40" />
+      <img src={logo} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover shadow-lg ring-2 ring-cheese-400/50" />
       <div className="min-w-0">
-        <div className="truncate text-sm font-extrabold text-cream-50">{businessName}</div>
+        <div className="truncate text-base font-extrabold text-cream-50">{businessName}</div>
         <div className="text-[11px] text-cream-200/50">ניהול מועדון הלקוחות</div>
       </div>
     </div>
