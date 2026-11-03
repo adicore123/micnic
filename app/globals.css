@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-rubik), "Segoe UI", system-ui, sans-serif;
+
+  /* פחם חם — רקעים כהים */
+  --color-crust-950: #130c08;
+  --color-crust-900: #1b120c;
+  --color-crust-800: #26190f;
+  --color-crust-700: #372516;
+  --color-crust-600: #4b3420;
+
+  /* קרם — גבינה בהירה */
+  --color-cream-50: #fdf8ef;
+  --color-cream-100: #f8efdd;
+  --color-cream-200: #f0e1c6;
+  --color-cream-300: #e3cea6;
+
+  /* אדום עגבניות */
+  --color-tomato-400: #ef5a42;
+  --color-tomato-500: #e23b2e;
+  --color-tomato-600: #c72f23;
+  --color-tomato-700: #a5271d;
+
+  /* ירוק בזיליקום */
+  --color-basil-400: #6dbb8b;
+  --color-basil-500: #4e9f6d;
+  --color-basil-600: #3c8558;
+
+  /* זהב גבינה */
+  --color-cheese-300: #f6c86a;
+  --color-cheese-400: #f2b441;
+  --color-cheese-500: #e9a31f;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-crust-950 font-sans text-cream-100 antialiased;
+}
+
+::selection {
+  background: var(--color-tomato-500);
+  color: #fff;
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--color-cheese-400);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-crust-600) 60%, transparent);
+  border-radius: 8px;
+}
+
+/* ---------- אנימציות ---------- */
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.55); }
+  65% { transform: scale(1.07); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes card-in {
+  from { opacity: 0; transform: perspective(900px) rotateX(14deg) translateY(26px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes draw-check {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+@keyframes sheen-sweep {
+  0% { transform: translateX(-160%) skewX(-18deg); }
+  100% { transform: translateX(340%) skewX(-18deg); }
+}
+@keyframes wa-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(37 211 102 / 0.45); }
+  75% { box-shadow: 0 0 0 16px rgb(37 211 102 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(37 211 102 / 0); }
+}
+@keyframes soft-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.anim-pop { animation: pop-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4) both; }
+.anim-fade-up { animation: fade-up 0.6s ease-out both; }
+.anim-card-in { animation: card-in 0.7s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+.anim-shake { animation: shake 0.45s ease both; }
+.anim-float { animation: soft-float 4.5s ease-in-out infinite; }
+
+.check-draw {
+  stroke-dasharray: 70;
+  stroke-dashoffset: 70;
+  animation: draw-check 0.65s ease-out 0.2s forwards;
+}
+
+/* ---------- כפתור וואטסאפ ---------- */
+.btn-wa {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.18s ease;
+}
+.btn-wa::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: 0;
+  width: 38%;
+  background: linear-gradient(105deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: sheen-sweep 3.2s ease-in-out infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+.btn-wa:hover { transform: translateY(-2px); }
+.btn-wa:active { transform: translateY(0) scale(0.98); }
+.wa-pulse { animation: wa-pulse 2.4s ease-out infinite; }
+
+/* ---------- בועת הודעה בסגנון וואטסאפ ---------- */
+.wa-bubble {
+  position: relative;
+  border-radius: 14px 4px 14px 14px;
+  background: #d9fdd3;
+  color: #0b141a;
+}
+.wa-bubble::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -7px;
+  border: 7px solid transparent;
+  border-top-color: #d9fdd3;
+  border-right-width: 0;
+}
+
+/* בועה יוצאת בצ'אט כהה (תצוגה מקדימה בהגדרות) */
+.wa-bubble-dark {
+  position: relative;
+  border-radius: 14px 4px 14px 14px;
+  background: #005c4b;
+  color: #e9edef;
+}
+.wa-bubble-dark::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -7px;
+  border: 7px solid transparent;
+  border-top-color: #005c4b;
+  border-right-width: 0;
+}
+
+/* ---------- כרטיס חברות ---------- */
+.card-lux {
+  position: relative;
+  border-radius: 1.25rem;
+  background: linear-gradient(160deg, #3a2517 0%, #211509 55%, #170e07 100%);
+  box-shadow:
+    0 18px 45px -18px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+.card-lux::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgb(242 180 65 / 0.55), rgb(226 59 46 / 0.25) 45%, rgb(242 180 65 / 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.card-sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.card-sheen::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  width: 34%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.13), transparent);
+  transform: translateX(-220%) skewX(-16deg);
+  animation: sheen-sweep 4.6s ease-in-out 1.2s infinite;
+}
+
+/* ---------- שדות קלט ---------- */
+.field {
+  @apply w-full rounded-xl border border-crust-600/40 bg-white/5 px-4 py-3 text-cream-50 transition placeholder:text-cream-200/30 focus:border-cheese-400/70 focus:bg-white/10 focus:outline-none;
+}
+.field-light {
+  @apply w-full rounded-xl border border-crust-700/15 bg-white px-4 py-3 text-crust-900 shadow-sm transition placeholder:text-crust-700/30 focus:border-cheese-500 focus:shadow-md focus:outline-none;
+}
+
+/* ---------- הדפסה ---------- */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+}
