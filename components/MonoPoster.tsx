@@ -13,10 +13,12 @@ import type { PublicSettings } from "@/lib/db/types";
 export default function MonoPoster({
   settings,
   link,
+  menuLink,
   onClose,
 }: {
   settings: PublicSettings;
   link: string;
+  menuLink: string;
   onClose: () => void;
 }) {
   const [qr, setQr] = useState<QRCodeStyling | null>(null);
@@ -76,7 +78,7 @@ export default function MonoPoster({
 
           {/* פריסת A4 — הדפסה בלבד */}
           <div className="hidden print:block force-colors">
-            <PosterA4 settings={settings} link={link} mono />
+            <PosterA4 settings={settings} link={link} menuLink={menuLink} mono />
           </div>
         </div>
 

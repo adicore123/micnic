@@ -7,13 +7,14 @@ import MonoPoster from "./MonoPoster";
 import PosterA4 from "./PosterA4";
 import WhatsAppButton from "./WhatsAppButton";
 import { normalizePhone, PHONE_HINT } from "@/lib/phone";
-import { renderInvite, waLink } from "@/lib/whatsapp";
+import { menuUrl, renderInvite, waLink } from "@/lib/whatsapp";
 import type { PublicSettings } from "@/lib/db/types";
 
 /** מרכז גיוס הלקוחות: הזמנה בוואטסאפ, קישור הצטרפות ופוסטר QR לדלפק (צבע + שחור-לבן) */
 export default function ShareView({ settings }: { settings: PublicSettings }) {
   const [origin, setOrigin] = useState<string | null>(null);
   const [qr, setQr] = useState<QRCodeStyling | null>(null);
+  const [menuQr, setMenuQr] = useState<QRCodeStyling | null>(null);
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [copied, setCopied] = useState<"invite" | "link" | null>(null);
@@ -29,6 +30,7 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
   useEffect(() => setOrigin(window.location.origin), []);
 
   const link = origin ? `${origin}/` : "";
+  const menuLink = origin ? menuUrl(origin) : "";
   const invite = useMemo(() => (link ? renderInvite(settings.inviteTemplate, settings, link) : ""), [settings, link]);
   const normalized = normalizePhone(phone);
 
@@ -135,15 +137,30 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
           </h3>
           <p className="relative mt-1.5 text-xl font-extrabold text-cream-50 sm:text-2xl">מועדון הלקוחות</p>
 
-          <div className="relative mx-auto mt-7 w-fit rounded-[1.75rem] bg-cream-50 p-5 shadow-inner sm:p-6">
+          <div className="relative mx-auto mt-7 flex w-fit items-start justify-center gap-5">
             {link ? (
-              <StyledQr data={link} logo={settings.logo} size={850} displaySize={270} onReady={setQr} />
+              <>
+                <div className="flex flex-col items-center">
+                  <div className="rounded-2xl bg-cream-50 p-4 shadow-inner">
+                    <StyledQr data={link} logo={settings.logo} size={850} displaySize={185} onReady={setQr} />
+                  </div>
+                  <p className="mt-2.5 text-sm font-extrabold text-cheese-300">🎁 הצטרפות למועדון</p>
+                  <p className="text-xs text-cream-200/60">{settings.discountPercent}% הנחה לחברים</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="rounded-2xl bg-cream-50 p-4 shadow-inner">
+                    <StyledQr data={menuLink} logo={settings.logo} size={850} displaySize={185} onReady={setMenuQr} />
+                  </div>
+                  <p className="mt-2.5 text-sm font-extrabold text-cheese-300">🍕 התפריט שלנו</p>
+                  <p className="text-xs text-cream-200/60">צפייה והזמנה מהטלפון</p>
+                </div>
+              </>
             ) : (
-              <div className="h-[270px] w-[270px] animate-pulse rounded-2xl bg-cream-200" />
+              <div className="h-[220px] w-[410px] animate-pulse rounded-2xl bg-cream-200" />
             )}
           </div>
 
-          <p className="relative mt-5 text-base font-bold text-cream-200/80 sm:text-lg">סרקו, הצטרפו וקבלו 🎁</p>
+          <p className="relative mt-6 text-base font-bold text-cream-200/80 sm:text-lg">סרקו והזמינו עכשיו 🎁</p>
           <div className="relative mx-auto mt-3 w-fit rounded-full bg-cheese-400/15 px-7 py-2.5 text-lg font-extrabold text-cheese-300 ring-1 ring-cheese-400/40">
             {settings.discountPercent}% הנחה לחברי המועדון
           </div>
@@ -152,7 +169,7 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
 
           {/* פריסת A4 מלאה — הדפסה בלבד */}
           <div className="hidden print:block">
-            <PosterA4 settings={settings} link={link} />
+            <PosterA4 settings={settings} link={link} menuLink={menuLink} />
           </div>
         </div>
 
@@ -163,7 +180,15 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
             disabled={!qr}
             className="rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-5 py-3 font-extrabold text-white shadow-lg shadow-tomato-600/30 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
           >
-            ⬇️ הורדת הקוד להדפסה
+            ⬇️ QR המועדון
+          </button>
+          <button
+            type="button"
+            onClick={() => menuQr?.download({ name: "micnic-menu-qr", extension: "png" })}
+            disabled={!menuQr}
+            className="rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-5 py-3 font-extrabold text-white shadow-lg shadow-tomato-600/30 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+          >
+            ⬇️ QR התפריט
           </button>
           <button
             type="button"
@@ -183,7 +208,9 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
       </section>
 
       {/* פוסטר שחור-לבן למדפסות מונו */}
-      {monoOpen && link && <MonoPoster settings={settings} link={link} onClose={() => setMonoOpen(false)} />}
+      {monoOpen && link && (
+        <MonoPoster settings={settings} link={link} menuLink={menuLink} onClose={() => setMonoOpen(false)} />
+      )}
     </div>
   );
 }

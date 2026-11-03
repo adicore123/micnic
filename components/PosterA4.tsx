@@ -12,10 +12,12 @@ import type { PublicSettings } from "@/lib/db/types";
 export default function PosterA4({
   settings,
   link,
+  menuLink,
   mono = false,
 }: {
   settings: PublicSettings;
   link: string;
+  menuLink: string;
   mono?: boolean;
 }) {
   const [logo, setLogo] = useState(settings.logo);
@@ -68,16 +70,41 @@ export default function PosterA4({
           )}
         </div>
 
-        {/* קוד QR ענק — קנבס 850px מוצג ב-90mm (~240 DPI, חד וקל לסריקה ממרחק) */}
-        <StyledQr data={link} logo={logo} size={850} displaySize="90mm" mono={mono} />
+        {/* שני קודי QR זה לצד זה — הצטרפות למועדון + התפריט (קנבס 850px, ~240 DPI) */}
+        <div className="flex w-full items-start justify-center gap-[10mm]">
+          <div className="flex flex-col items-center">
+            <StyledQr data={link} logo={logo} size={850} displaySize="70mm" mono={mono} />
+            <p
+              style={{ fontSize: "15pt" }}
+              className={`mt-[3.5mm] font-extrabold ${mono ? "text-black" : "text-cheese-300"}`}
+            >
+              🎁 הצטרפות למועדון
+            </p>
+            <p style={{ fontSize: "10.5pt" }} className="font-semibold opacity-60">
+              {settings.discountPercent}% הנחה לחברים
+            </p>
+          </div>
+          <div className="flex flex-col items-center">
+            <StyledQr data={menuLink} logo={logo} size={850} displaySize="70mm" mono={mono} />
+            <p
+              style={{ fontSize: "15pt" }}
+              className={`mt-[3.5mm] font-extrabold ${mono ? "text-black" : "text-cheese-300"}`}
+            >
+              🍕 התפריט שלנו
+            </p>
+            <p style={{ fontSize: "10.5pt" }} className="font-semibold opacity-60">
+              צפייה והזמנה מהטלפון
+            </p>
+          </div>
+        </div>
 
         {/* תחתית — קריאה לפעולה והנחה */}
         <div className="flex flex-col items-center pb-[4mm]">
-          <p style={{ fontSize: "32pt" }} className="font-extrabold">
-            סרקו והצטרפו עכשיו
+          <p style={{ fontSize: "30pt" }} className="font-extrabold">
+            סרקו והזמינו עכשיו
           </p>
           <div
-            style={{ fontSize: "26pt" }}
+            style={{ fontSize: "24pt" }}
             className={`mt-[5mm] rounded-[3mm] px-[13mm] py-[4mm] font-extrabold ${
               mono
                 ? "border-[0.6mm] border-black"
@@ -86,7 +113,7 @@ export default function PosterA4({
           >
             {settings.discountPercent}% הנחה לחברי המועדון
           </div>
-          <p style={{ fontSize: "15pt" }} className="mt-[4mm] font-semibold opacity-60">
+          <p style={{ fontSize: "14pt" }} className="mt-[4mm] font-semibold opacity-60">
             ההצטרפות חינם · לוקחת 10 שניות
           </p>
         </div>

@@ -5,7 +5,7 @@ import type QRCodeStyling from "qr-code-styling";
 import StyledQr from "./StyledQr";
 import WhatsAppButton from "./WhatsAppButton";
 import { normalizePhone, PHONE_HINT } from "@/lib/phone";
-import { waLink } from "@/lib/whatsapp";
+import { menuMessage, menuUrl, waLink } from "@/lib/whatsapp";
 import type { PublicSettings } from "@/lib/db/types";
 
 /** מודול התפריט הדיגיטלי: שליחה ללקוח בוואטסאפ, צפייה ו-QR לשולחנות */
@@ -18,13 +18,12 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
 
   useEffect(() => setOrigin(window.location.origin), []);
 
-  const menuUrl = origin ? `${origin}/menu` : "";
+  const menuLink = origin ? menuUrl(origin) : "";
   const normalized = normalizePhone(phone);
 
   const message = useMemo(
-    () =>
-      `היי! 🍕 התפריט הדיגיטלי של ${settings.businessName} מחכה לכם — עיינו, בחרו והזמינו 👇\n${menuUrl}`,
-    [settings.businessName, menuUrl],
+    () => menuMessage(settings.businessName, menuLink),
+    [settings.businessName, menuLink],
   );
 
   function guardSend(e: React.MouseEvent) {
@@ -37,13 +36,14 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
   }
 
   async function copyLink() {
-    if (!menuUrl) return;
-    await navigator.clipboard.writeText(menuUrl).catch(() => null);
+    if (!menuLink) return;
+    await navigator.clipboard.writeText(menuLink).catch(() => null);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   }
 
   return (
+    <>
     <div className="grid items-start gap-8 lg:grid-cols-2">
       {/* שליחת התפריט בוואטסאפ */}
       <section className="rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
@@ -87,7 +87,7 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
           <button
             type="button"
             onClick={copyLink}
-            disabled={!menuUrl}
+            disabled={!menuLink}
             className="rounded-xl border border-crust-700/15 bg-white px-4 py-2.5 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 active:scale-[0.99] disabled:opacity-50"
           >
             {copied ? "הקישור הועתק ✓" : "🔗 העתקת קישור התפריט"}
@@ -101,9 +101,9 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
             🍕 פתיחת התפריט לצפייה
           </a>
         </div>
-        {menuUrl && (
+        {menuLink && (
           <p dir="ltr" className="mt-2 truncate text-left text-xs text-crust-700/40">
-            {menuUrl}
+            {menuLink}
           </p>
         )}
 
@@ -133,8 +133,8 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
           <h3 className="relative mt-1 text-3xl font-extrabold text-cheese-300">התפריט של {settings.businessName}</h3>
 
           <div className="relative mx-auto mt-7 w-fit rounded-3xl bg-cream-50 p-5 shadow-inner">
-            {menuUrl ? (
-              <StyledQr data={menuUrl} logo={settings.logo} size={850} displaySize={260} onReady={setQr} />
+            {menuLink ? (
+              <StyledQr data={menuLink} logo={settings.logo} size={850} displaySize={260} onReady={setQr} />
             ) : (
               <div className="h-[260px] w-[260px] animate-pulse rounded-2xl bg-cream-200" />
             )}
@@ -165,5 +165,27 @@ export default function MenuView({ settings }: { settings: PublicSettings }) {
         </div>
       </section>
     </div>
+
+    {/* תצוגה חיה של התפריט — בלי לעזוב את הניהול */}
+    <section className="mt-8 rounded-2xl border border-crust-700/10 bg-white p-5 shadow-sm sm:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-extrabold text-crust-900">תצוגה חיה של התפריט</h2>
+          <p className="mt-0.5 text-sm text-crust-700/60">כך בדיוק רואים הלקוחות — אפשר לגלול ולבדוק</p>
+        </div>
+        <a
+          href="/menu"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-xl border border-crust-700/15 bg-white px-4 py-2 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-100"
+        >
+          ⤢ מסך מלא
+        </a>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-crust-700/10 bg-white shadow-inner">
+        <iframe src="/menu" title="תצוגה חיה של התפריט" className="h-[70vh] min-h-96 w-full border-0" loading="lazy" />
+      </div>
+    </section>
+    </>
   );
 }

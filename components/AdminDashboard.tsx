@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import JoinForm, { type JoinResult } from "./JoinForm";
 import SuccessView from "./SuccessView";
 import WhatsAppButton from "./WhatsAppButton";
-import { renderMessage, waLink } from "@/lib/whatsapp";
+import { menuMessage, menuUrl, renderMessage, waLink } from "@/lib/whatsapp";
 import { displayPhone, joinSchema } from "@/lib/phone";
 import type { Customer, PublicSettings } from "@/lib/db/types";
 
@@ -23,6 +23,11 @@ export default function AdminDashboard({
   const [customers, setCustomers] = useState(initialCustomers);
   const [result, setResult] = useState<JoinResult | null>(null);
   const [query, setQuery] = useState("");
+  const [origin, setOrigin] = useState<string | null>(null);
+
+  useEffect(() => setOrigin(window.location.origin), []);
+
+  const menuLink = useMemo(() => (origin ? menuUrl(origin) : ""), [origin]);
 
   // עריכת לקוח
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -184,6 +189,18 @@ export default function AdminDashboard({
                             href={waLink(c.phone, renderMessage(settings.messageTemplate, c.name, settings))}
                             label={`שליחת הודעה ל${c.name}`}
                           />
+                          <a
+                            href={menuLink ? waLink(c.phone, menuMessage(settings.businessName, menuLink, c.name)) : "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`שליחת התפריט ל${c.name}`}
+                            aria-label={`שליחת התפריט ל${c.name}`}
+                            className={`${actionBtn} inline-flex text-crust-700/50 transition hover:bg-cheese-400/15 hover:text-cheese-500`}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2.5 2.5 0 01-5 0V3M4.5 10v11M20 3c-2 1-3 3.2-3 6v5h3v7M20 3v11" />
+                            </svg>
+                          </a>
                           <button
                             type="button"
                             onClick={() => startEdit(c)}

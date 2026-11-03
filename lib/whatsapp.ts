@@ -28,3 +28,14 @@ export function renderInvite(template: string, settings: WithMessageVars, link: 
 export function selfJoinMessage(businessName: string): string {
   return `היי ${businessName}! 🍕 הצטרפתי כרגע למועדון הלקוחות`;
 }
+
+/** כתובת התפריט הדיגיטלי */
+export function menuUrl(origin: string): string {
+  return `${origin}/menu`;
+}
+
+/** הודעת שליחת התפריט — עם שם הלקוח כשנשלחת ממודול הלקוחות */
+export function menuMessage(businessName: string, link: string, customerName?: string): string {
+  const greeting = customerName ? `היי ${customerName}!` : "היי!";
+  return `${greeting} 🍕 התפריט הדיגיטלי של ${businessName} מחכה לכם — עיינו, בחרו והזמינו 👇\n${link}`;
+}
