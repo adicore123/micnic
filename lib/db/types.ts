@@ -16,6 +16,8 @@ export type Settings = {
   discountPercent: number;
   /** תבנית הודעת הוואטסאפ — תומך ב-{name}, {business}, {discount} */
   messageTemplate: string;
+  /** תבנית הזמנה למועדון ללקוחות פוטנציאליים — תומך ב-{business}, {discount}, {link} */
+  inviteTemplate: string;
   /** טלפון העסק לצ'אט הצטרפות עצמאית, בפורמט 05XXXXXXXX או ריק */
   businessPhone: string;
   adminPassword: string;
@@ -29,6 +31,8 @@ export interface Store {
   addCustomer(input: NewCustomer): Promise<Customer>;
   deleteCustomer(id: string): Promise<void>;
   findCustomerByPhone(phone: string): Promise<Customer | null>;
+  findCustomerById(id: string): Promise<Customer | null>;
+  updateCustomer(id: string, changes: NewCustomer): Promise<Customer | null>;
   getSettings(): Promise<Settings>;
   saveSettings(settings: Settings): Promise<void>;
 }

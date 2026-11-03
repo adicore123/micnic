@@ -3,13 +3,19 @@
 import { useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { normalizePhone } from "@/lib/phone";
-import { renderMessage } from "@/lib/whatsapp";
+import { renderInvite, renderMessage } from "@/lib/whatsapp";
 import type { PublicSettings } from "@/lib/db/types";
 
 const PLACEHOLDERS = [
   { token: "{name}", label: "שם הלקוח" },
   { token: "{business}", label: "שם העסק" },
   { token: "{discount}", label: "אחוז ההנחה" },
+];
+
+const INVITE_PLACEHOLDERS = [
+  { token: "{business}", label: "שם העסק" },
+  { token: "{discount}", label: "אחוז ההנחה" },
+  { token: "{link}", label: "קישור ההצטרפות" },
 ];
 
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
@@ -23,6 +29,7 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
     logo: initial.logo,
     discountPercent: String(initial.discountPercent),
     messageTemplate: initial.messageTemplate,
+    inviteTemplate: initial.inviteTemplate,
     businessPhone: initial.businessPhone ? initial.businessPhone.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1-$2-$3") : "",
     password: "",
     passwordConfirm: "",
@@ -39,6 +46,15 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
         discountPercent: Number(form.discountPercent) || 0,
       }),
     [form.messageTemplate, form.businessName, form.discountPercent],
+  );
+
+  const invitePreview = useMemo(
+    () =>
+      renderInvite(form.inviteTemplate, {
+        businessName: form.businessName.trim() || "העסק",
+        discountPercent: Number(form.discountPercent) || 0,
+      }, typeof window !== "undefined" ? `${window.location.origin}/` : "https://…/"),
+    [form.inviteTemplate, form.businessName, form.discountPercent],
   );
 
   function set(key: keyof typeof form, value: string) {
@@ -106,6 +122,7 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
         logo: form.logo,
         discountPercent: discount,
         messageTemplate: form.messageTemplate,
+        inviteTemplate: form.inviteTemplate,
         businessPhone: form.businessPhone ? normalizePhone(form.businessPhone)! : "",
         adminPassword: form.password,
       }),
@@ -247,6 +264,48 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
             <div className="min-h-56 bg-[#0B141A] p-4">
               <div className="wa-bubble-dark ml-6 w-fit max-w-full px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line">
                 {preview}
+                <span className="mt-1 block text-left text-[10px] text-white/50">✓✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* הודעת הזמנה למועדון */}
+      <section className="rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-extrabold text-crust-900">הודעת הזמנה למועדון</h2>
+        <p className="mb-4 mt-1 text-sm text-crust-700/60">
+          נשלחת ללקוחות פוטנציאליים עם קישור ההצטרפות — דרך עמוד "שיתוף ופוסטר"
+        </p>
+
+        <div className="mb-3 flex flex-wrap gap-2">
+          {INVITE_PLACEHOLDERS.map((p) => (
+            <button
+              key={p.token}
+              type="button"
+              onClick={() => set("inviteTemplate", form.inviteTemplate + p.token)}
+              className="rounded-full bg-cream-100 px-3.5 py-1.5 text-xs font-bold text-crust-700 ring-1 ring-crust-700/10 transition hover:bg-cheese-400/20 hover:ring-cheese-500/40"
+            >
+              {p.label} · <span dir="ltr">{p.token}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <textarea
+            value={form.inviteTemplate}
+            onChange={(e) => set("inviteTemplate", e.target.value)}
+            rows={6}
+            className="field-light resize-y leading-relaxed"
+          />
+
+          <div className="overflow-hidden rounded-2xl border border-crust-700/10 shadow-md">
+            <div className="bg-[#1F2C33] px-4 py-3">
+              <div className="text-xs font-bold text-white/80">תצוגה חיה — כך תיראה ההזמנה שהלקוח מקבל</div>
+            </div>
+            <div className="min-h-40 bg-[#0B141A] p-4">
+              <div className="wa-bubble-dark ml-6 w-fit max-w-full px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line">
+                {invitePreview}
                 <span className="mt-1 block text-left text-[10px] text-white/50">✓✓</span>
               </div>
             </div>

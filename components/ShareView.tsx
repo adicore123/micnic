@@ -1,0 +1,155 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import type QRCodeStyling from "qr-code-styling";
+import StyledQr from "./StyledQr";
+import WhatsAppButton from "./WhatsAppButton";
+import { normalizePhone, PHONE_HINT } from "@/lib/phone";
+import { renderInvite, waLink } from "@/lib/whatsapp";
+import type { PublicSettings } from "@/lib/db/types";
+
+/** מרכז גיוס הלקוחות: הזמנה בוואטסאפ, קישור הצטרפות ופוסטר QR לדלפק */
+export default function ShareView({ settings }: { settings: PublicSettings }) {
+  const [origin, setOrigin] = useState<string | null>(null);
+  const [qr, setQr] = useState<QRCodeStyling | null>(null);
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<"invite" | "link" | null>(null);
+
+  useEffect(() => setOrigin(window.location.origin), []);
+
+  const link = origin ? `${origin}/` : "";
+  const invite = useMemo(() => (link ? renderInvite(settings.inviteTemplate, settings, link) : ""), [settings, link]);
+  const normalized = normalizePhone(phone);
+
+  function guardInvite(e: React.MouseEvent) {
+    if (!normalized) {
+      e.preventDefault();
+      setPhoneError(`מספר הטלפון לא נראה תקין. ${PHONE_HINT}`);
+    } else {
+      setPhoneError(null);
+    }
+  }
+
+  async function copy(text: string, kind: "invite" | "link") {
+    await navigator.clipboard.writeText(text).catch(() => null);
+    setCopied(kind);
+    setTimeout(() => setCopied(null), 2500);
+  }
+
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-2">
+      {/* הזמנה בוואטסאפ */}
+      <section className="rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-extrabold text-crust-900">הזמנת לקוחות בוואטסאפ</h2>
+        <p className="mb-5 mt-1 text-sm leading-relaxed text-crust-700/60">
+          מזינים מספר טלפון של לקוח → לוחצים על הכפתור הירוק → נפתח צ'אט עם הודעת הזמנה שכוללת את קישור ההצטרפות
+          וההטבות. הלקוח נרשם מהטלפון שלו תוך 10 שניות.
+        </p>
+
+        <label htmlFor="invite-phone" className="mb-1.5 block text-sm font-semibold text-crust-700">
+          טלפון הלקוח
+        </label>
+        <input
+          id="invite-phone"
+          type="tel"
+          dir="ltr"
+          inputMode="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="050-1234567"
+          className="field-light mb-2 text-right text-lg"
+        />
+        {phoneError && <p className="mb-3 text-sm font-semibold text-tomato-600">{phoneError}</p>}
+
+        <WhatsAppButton
+          className="w-full justify-center"
+          href={normalized ? waLink(normalized, invite) : "#"}
+          onClick={guardInvite}
+          label="שליחת קישור ההצטרפות"
+          sub="ההודעה מולאה מראש — רק ללחוץ שלח"
+        />
+
+        <div className="mt-5">
+          <p className="mb-2 text-xs text-crust-700/50">כך תיראה ההודעה אצל הלקוח:</p>
+          <div className="wa-bubble mx-auto w-fit max-w-full px-4 py-3 text-sm leading-relaxed whitespace-pre-line shadow">
+            {invite || "…"}
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-crust-700/10 pt-4">
+          <button
+            type="button"
+            onClick={() => copy(invite, "invite")}
+            disabled={!invite}
+            className="rounded-xl border border-crust-700/15 bg-white px-4 py-2.5 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 active:scale-[0.99] disabled:opacity-50"
+          >
+            {copied === "invite" ? "ההודעה הועתקה ✓" : "📋 העתקת ההודעה כולה"}
+          </button>
+          <button
+            type="button"
+            onClick={() => link && copy(link, "link")}
+            disabled={!link}
+            className="rounded-xl border border-crust-700/15 bg-white px-4 py-2.5 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 active:scale-[0.99] disabled:opacity-50"
+          >
+            {copied === "link" ? "הקישור הועתק ✓" : "🔗 העתקת הקישור בלבד"}
+          </button>
+        </div>
+        {link && (
+          <p dir="ltr" className="mt-2 truncate text-left text-xs text-crust-700/40">
+            {link}
+          </p>
+        )}
+      </section>
+
+      {/* פוסטר QR לדלפק */}
+      <section>
+        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-tomato-500/25 blur-[100px]" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-0 h-64 w-64 rounded-full bg-cheese-400/15 blur-[100px]" />
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={settings.logo} alt="" className="anim-float relative mx-auto h-20 w-20 rounded-full object-cover ring-2 ring-cheese-400/40" />
+
+          <h3 className="relative mt-5 text-2xl font-extrabold leading-snug text-cream-50 sm:text-3xl">
+            סרקו והצטרפו
+            <br />
+            למועדון הלקוחות
+          </h3>
+          <p className="relative mt-2 text-cream-200/70">של {settings.businessName}</p>
+
+          <div className="relative mx-auto mt-6 w-fit rounded-3xl bg-cream-50 p-4 shadow-inner sm:p-5">
+            {link ? (
+              <StyledQr data={link} logo={settings.logo} size={250} onReady={setQr} />
+            ) : (
+              <div className="h-[250px] w-[250px] animate-pulse rounded-2xl bg-cream-200" />
+            )}
+          </div>
+
+          <div className="relative mx-auto mt-6 w-fit rounded-full bg-cheese-400/15 px-6 py-2.5 text-base font-extrabold text-cheese-300 ring-1 ring-cheese-400/40 sm:text-lg">
+            🎁 {settings.discountPercent}% הנחה לחברי המועדון
+          </div>
+          <p className="relative mt-3 text-sm text-cream-200/50">ההצטרפות לוקחת 10 שניות 📱</p>
+        </div>
+
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => qr?.download({ name: "micnic-club-qr", extension: "png" })}
+            disabled={!qr}
+            className="rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-5 py-3 font-extrabold text-white shadow-lg shadow-tomato-600/30 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+          >
+            ⬇️ הורדת הקוד להדפסה
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-xl border border-crust-700/15 bg-white px-5 py-3 font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 active:scale-[0.99]"
+          >
+            🖨️ הדפסה
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}

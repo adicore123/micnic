@@ -77,6 +77,20 @@ export const jsonStore: Store = {
     return (await read()).customers.find((c) => c.phone === phone) ?? null;
   },
 
+  async findCustomerById(id) {
+    return (await read()).customers.find((c) => c.id === id) ?? null;
+  },
+
+  updateCustomer(id, changes) {
+    return update((db) => {
+      const customer = db.customers.find((c) => c.id === id);
+      if (!customer) return null;
+      customer.name = changes.name;
+      customer.phone = changes.phone;
+      return { ...customer };
+    });
+  },
+
   async getSettings() {
     return (await read()).settings;
   },

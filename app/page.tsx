@@ -33,7 +33,12 @@ export default async function HomePage() {
           <JoinFlow settings={settings} />
         </div>
 
-        <footer className="text-center text-xs text-cream-200/35">מגישים אהבה ופיצה · {settings.businessName} 🍕</footer>
+        <footer className="text-center text-xs text-cream-200/35">
+          מגישים אהבה ופיצה · {settings.businessName} 🍕 ·{" "}
+          <a href="/admin" className="underline underline-offset-4 transition hover:text-cheese-300">
+            כניסת צוות
+          </a>
+        </footer>
       </main>
     </div>
   );

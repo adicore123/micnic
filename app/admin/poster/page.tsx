@@ -1,9 +1,6 @@
-import { getStore } from "@/lib/db";
-import PosterView from "@/components/PosterView";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function PosterPage() {
-  const { adminPassword: _hidden, ...settings } = await (await getStore()).getSettings();
-  return <PosterView settings={settings} />;
+/** הפוסטר עבר לעמוד השיתוף המאוחד */
+export default function PosterPage() {
+  redirect("/admin/share");
 }

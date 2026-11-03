@@ -103,6 +103,18 @@ body {
 .anim-shake { animation: shake 0.45s ease both; }
 .anim-float { animation: soft-float 4.5s ease-in-out infinite; }
 
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.anim-fade { animation: fade 0.2s ease-out both; }
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.anim-drawer { animation: drawer-in 0.28s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+
 .check-draw {
   stroke-dasharray: 70;
   stroke-dashoffset: 70;
@@ -216,6 +228,10 @@ body {
 }
 
 /* ---------- הדפסה ---------- */
+@page {
+  margin: 10mm;
+}
+
 @media print {
   .no-print { display: none !important; }
   body { background: #fff !important; }

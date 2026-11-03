@@ -15,6 +15,11 @@ export const DEFAULT_SETTINGS: Settings = {
     "",
     "נשמח לראותך בקרוב 🍕❤️",
   ].join("\n"),
+  inviteTemplate: [
+    "היי! 🍕 רוצים הנחה של {discount}% על כל הזמנה ב{business}?",
+    "הצטרפו חינם למועדון הלקוחות שלנו ותקבלו הטבות ומבצעים לחברי המועדות 👇",
+    "{link}",
+  ].join("\n"),
   businessPhone: "",
   adminPassword: "micnic2026",
 };

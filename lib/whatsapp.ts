@@ -16,6 +16,14 @@ export function waLink(phone: string, message: string): string {
   return `https://wa.me/${toInternational(phone)}?text=${encodeURIComponent(message)}`;
 }
 
+/** ממלא את המציינים {business} {discount} {link} בתבנית ההזמנה */
+export function renderInvite(template: string, settings: WithMessageVars, link: string): string {
+  return template
+    .replaceAll("{business}", settings.businessName)
+    .replaceAll("{discount}", String(settings.discountPercent))
+    .replaceAll("{link}", link);
+}
+
 /** ההודעה שלקוח שנרשם לבד שולח לעסק */
 export function selfJoinMessage(businessName: string): string {
   return `היי ${businessName}! 🍕 הצטרפתי כרגע למועדון הלקוחות`;

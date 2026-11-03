@@ -17,6 +17,7 @@ const settingsSchema = z.object({
     .min(1, "ההנחה חייבת להיות לפחות 1%")
     .max(100, "ההנחה לא יכולה לעבור 100%"),
   messageTemplate: z.string().trim().min(10, "ההודעה קצרה מדי").max(1200, "ההודעה ארוכה מדי"),
+  inviteTemplate: z.string().trim().min(10, "הודעת ההזמנה קצרה מדי").max(600, "הודעת ההזמנה ארוכה מדי"),
   businessPhone: z.union([z.literal(""), phoneSchema]),
   adminPassword: z.union([z.literal(""), z.string().min(4, "הסיסמה קצרה מדי (לפחות 4 תווים)").max(40)]),
 });

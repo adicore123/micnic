@@ -54,12 +54,26 @@ export const mongoStore: Store = {
     return customers.findOne({ phone });
   },
 
+  async findCustomerById(id) {
+    const { customers } = await collections();
+    return customers.findOne({ id });
+  },
+
+  async updateCustomer(id, changes) {
+    const { customers } = await collections();
+    return customers.findOneAndUpdate(
+      { id },
+      { $set: { name: changes.name, phone: changes.phone } },
+      { returnDocument: "after" },
+    );
+  },
+
   async getSettings() {
     const { settings } = await collections();
     const doc = await settings.findOne({ _id: SETTINGS_ID });
-    if (!doc) return { ...DEFAULT_SETTINGS };
-    const { _id: _ignored, ...rest } = doc;
-    return rest;
+    const { _id: _ignored, ...saved } = doc ?? {};
+    // מיזוג עם ברירות המחדל — מכסה שדות שנוספו בגרסאות חדשות
+    return { ...DEFAULT_SETTINGS, ...saved };
   },
 
   async saveSettings(s) {

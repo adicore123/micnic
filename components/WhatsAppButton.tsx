@@ -9,9 +9,10 @@ type Props = {
   /** lg = הכפתור הגדול והמרכזי, sm = אייקון עגול קטן לטבלאות */
   size?: "sm" | "lg";
   className?: string;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 };
 
-export default function WhatsAppButton({ href, label, sub, size = "lg", className = "" }: Props) {
+export default function WhatsAppButton({ href, label, sub, size = "lg", className = "", onClick }: Props) {
   if (size === "sm") {
     return (
       <a
@@ -32,6 +33,7 @@ export default function WhatsAppButton({ href, label, sub, size = "lg", classNam
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
       className={`btn-wa wa-pulse inline-flex items-center gap-4 rounded-2xl bg-gradient-to-br from-[#58E07F] via-[#25D366] to-[#1BA94C] px-6 py-4 text-white shadow-xl shadow-emerald-600/40 ${className}`}
     >
       <WhatsAppIcon size={40} plain />
