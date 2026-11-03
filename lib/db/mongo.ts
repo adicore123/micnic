@@ -1,11 +1,16 @@
 import { MongoClient } from "mongodb";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { DEFAULT_SETTINGS } from "../defaults";
 import type { Customer, NewCustomer, Settings, Store } from "./types";
 
 type SettingsDoc = Settings & { _id: string };
 
-const globalForMongo = globalThis as typeof globalThis & { __micnicMongo?: Promise<MongoClient> };
+const globalForMongo = globalThis as typeof globalThis & {
+  __micnicMongo?: Promise<MongoClient>;
+  __micnicImported?: boolean;
+};
 
 function client(): Promise<MongoClient> {
   const uri = process.env.MONGODB_URI;
@@ -16,10 +21,35 @@ function client(): Promise<MongoClient> {
 
 async function collections() {
   const db = (await client()).db("micnic");
-  return {
+  const cols = {
     customers: db.collection<Customer>("customers"),
     settings: db.collection<SettingsDoc>("settings"),
   };
+  await importLocalData(cols);
+  return cols;
+}
+
+/** מיגרציה חד-פעמית: אם הענן ריק וקיים בסיס JSON מקומי — מעבירים אותו ל-Mongo */
+async function importLocalData(cols: {
+  customers: import("mongodb").Collection<Customer>;
+  settings: import("mongodb").Collection<SettingsDoc>;
+}) {
+  if (globalForMongo.__micnicImported) return;
+  globalForMongo.__micnicImported = true;
+  try {
+    const local = JSON.parse(
+      await fs.readFile(path.join(process.cwd(), "data", "db.json"), "utf8"),
+    ) as { customers?: Customer[]; settings?: Settings };
+
+    if (local.settings && (await cols.settings.countDocuments()) === 0) {
+      await cols.settings.updateOne({ _id: SETTINGS_ID }, { $set: local.settings }, { upsert: true });
+    }
+    if (Array.isArray(local.customers) && local.customers.length > 0 && (await cols.customers.countDocuments()) === 0) {
+      await cols.customers.insertMany(local.customers);
+    }
+  } catch {
+    // אין קובץ מקומי או שכבר הועבר — ממשיכים כרגיל
+  }
 }
 
 const SETTINGS_ID = "main";
