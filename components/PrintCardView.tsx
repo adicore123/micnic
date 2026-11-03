@@ -27,7 +27,7 @@ export default function PrintCardView({ customer, settings }: { customer: Custom
         </Link>
       </div>
 
-      <div className="w-full max-w-sm rounded-2xl border-2 border-crust-900/10 bg-white p-6 text-center shadow-md">
+      <div className="print-target force-colors w-full max-w-sm rounded-2xl border-2 border-crust-900/10 bg-white p-6 text-center shadow-md">
         <div className="flex items-center gap-3 text-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={settings.logo} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover shadow-md ring-2 ring-tomato-500/40" />

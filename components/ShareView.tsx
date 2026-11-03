@@ -3,18 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 import type QRCodeStyling from "qr-code-styling";
 import StyledQr from "./StyledQr";
+import MonoPoster from "./MonoPoster";
 import WhatsAppButton from "./WhatsAppButton";
 import { normalizePhone, PHONE_HINT } from "@/lib/phone";
 import { renderInvite, waLink } from "@/lib/whatsapp";
 import type { PublicSettings } from "@/lib/db/types";
 
-/** מרכז גיוס הלקוחות: הזמנה בוואטסאפ, קישור הצטרפות ופוסטר QR לדלפק */
+/** מרכז גיוס הלקוחות: הזמנה בוואטסאפ, קישור הצטרפות ופוסטר QR לדלפק (צבע + שחור-לבן) */
 export default function ShareView({ settings }: { settings: PublicSettings }) {
   const [origin, setOrigin] = useState<string | null>(null);
   const [qr, setQr] = useState<QRCodeStyling | null>(null);
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [copied, setCopied] = useState<"invite" | "link" | null>(null);
+  const [monoOpen, setMonoOpen] = useState(false);
+
+  // בהדפסה מהעמוד הזה מודפס רק הפוסטר (אלא אם פתוח הפוסטר השחור-לבן, שמנהל לבד)
+  useEffect(() => {
+    if (monoOpen) return;
+    document.body.classList.add("print-poster-only");
+    return () => document.body.classList.remove("print-poster-only");
+  }, [monoOpen]);
 
   useEffect(() => setOrigin(window.location.origin), []);
 
@@ -40,7 +49,7 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
   return (
     <div className="grid items-start gap-8 lg:grid-cols-2">
       {/* הזמנה בוואטסאפ */}
-      <section className="rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
+      <section className="no-print rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-extrabold text-crust-900">הזמנת לקוחות בוואטסאפ</h2>
         <p className="mb-5 mt-1 text-sm leading-relaxed text-crust-700/60">
           מזינים מספר טלפון של לקוח → לוחצים על הכפתור הירוק → נפתח צ'אט עם הודעת הזמנה שכוללת את קישור ההצטרפות
@@ -104,7 +113,11 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
 
       {/* פוסטר QR לדלפק */}
       <section>
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10">
+        <div
+          className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10 ${
+            monoOpen ? "" : "print-target force-colors"
+          }`}
+        >
           <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-tomato-500/25 blur-[100px]" />
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-0 h-64 w-64 rounded-full bg-cheese-400/15 blur-[100px]" />
 
@@ -138,7 +151,7 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
           <p className="relative mt-4 text-sm text-cream-200/50">ההצטרפות לוקחת 10 שניות 📱</p>
         </div>
 
-        <div className="mt-4 flex flex-wrap justify-center gap-3">
+        <div className="no-print mt-4 flex flex-wrap justify-center gap-3">
           <button
             type="button"
             onClick={() => qr?.download({ name: "micnic-club-qr", extension: "png" })}
@@ -149,13 +162,23 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
           </button>
           <button
             type="button"
+            onClick={() => setMonoOpen(true)}
+            className="rounded-xl bg-gradient-to-br from-crust-800 to-crust-950 px-6 py-3 font-extrabold text-white shadow-lg shadow-crust-900/30 ring-1 ring-white/20 transition hover:brightness-125 active:scale-[0.99]"
+          >
+            🖨️ הדפסה שחור-לבן
+          </button>
+          <button
+            type="button"
             onClick={() => window.print()}
             className="rounded-xl border border-crust-700/15 bg-white px-5 py-3 font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 active:scale-[0.99]"
           >
-            🖨️ הדפסה
+            הדפסה צבעונית
           </button>
         </div>
       </section>
+
+      {/* פוסטר שחור-לבן למדפסות מונו */}
+      {monoOpen && link && <MonoPoster settings={settings} link={link} onClose={() => setMonoOpen(false)} />}
     </div>
   );
 }

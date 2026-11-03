@@ -232,7 +232,28 @@ body {
   margin: 10mm;
 }
 
+/* מכריח הדפסת רקעים בצבע אמיתי (ברירת המחדל של דפדפנים מדלגת עליהם) */
+.force-colors {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* כשעמוד השיתוף פתוח — בהדפסה יופיע רק הפוסטר (צבע או שחור-לבן לפי מה שמוצג) */
 @media print {
   .no-print { display: none !important; }
   body { background: #fff !important; }
+
+  body.print-poster-only * {
+    visibility: hidden !important;
+  }
+  body.print-poster-only .print-target,
+  body.print-poster-only .print-target * {
+    visibility: visible !important;
+  }
+  body.print-poster-only .print-target {
+    position: absolute !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
 }
