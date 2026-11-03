@@ -6,21 +6,23 @@ import { toGrayscaleDataUrl } from "@/lib/image";
 import type { PublicSettings } from "@/lib/db/types";
 
 /**
- * פריסת פוסטר בגודל עמוד A4 אמיתי (210×297mm) — מידות פיזיות להדפסה מושלמת.
- * מוצג רק בהדפסה; גרסת mono = שחור-לבן עם מסגרת קלאסית, גרסת הצבע = עמוד כהה יוקרתי.
+ * פריסת פוסטר A4 אמיתי (210×297mm) — מסר אחד לפוסטר:
+ * mode="club" — הצטרפות למועדון הלקוחות · mode="menu" — התפריט הדיגיטלי.
+ * מוצג רק בהדפסה; mono = שחור-לבן עם מסגרת קלאסית.
  */
 export default function PosterA4({
   settings,
+  mode,
   link,
-  menuLink,
   mono = false,
 }: {
   settings: PublicSettings;
+  mode: "club" | "menu";
   link: string;
-  menuLink: string;
   mono?: boolean;
 }) {
   const [logo, setLogo] = useState(settings.logo);
+  const isClub = mode === "club";
 
   useEffect(() => {
     let alive = true;
@@ -60,7 +62,7 @@ export default function PosterA4({
             {settings.businessName}
           </h1>
           <p style={{ fontSize: "22pt" }} className="mt-[2.5mm] font-bold opacity-80">
-            מועדון הלקוחות
+            {isClub ? "מועדון הלקוחות" : "התפריט הדיגיטלי"}
           </p>
           {mono && (
             <div aria-hidden="true" className="mt-[6mm] w-[72mm]">
@@ -70,38 +72,13 @@ export default function PosterA4({
           )}
         </div>
 
-        {/* שני קודי QR זה לצד זה — הצטרפות למועדון + התפריט (קנבס 850px, ~240 DPI) */}
-        <div className="flex w-full items-start justify-center gap-[10mm]">
-          <div className="flex flex-col items-center">
-            <StyledQr data={link} logo={logo} size={850} displaySize="70mm" mono={mono} />
-            <p
-              style={{ fontSize: "15pt" }}
-              className={`mt-[3.5mm] font-extrabold ${mono ? "text-black" : "text-cheese-300"}`}
-            >
-              🎁 הצטרפות למועדון
-            </p>
-            <p style={{ fontSize: "10.5pt" }} className="font-semibold opacity-60">
-              {settings.discountPercent}% הנחה לחברים
-            </p>
-          </div>
-          <div className="flex flex-col items-center">
-            <StyledQr data={menuLink} logo={logo} size={850} displaySize="70mm" mono={mono} />
-            <p
-              style={{ fontSize: "15pt" }}
-              className={`mt-[3.5mm] font-extrabold ${mono ? "text-black" : "text-cheese-300"}`}
-            >
-              🍕 התפריט שלנו
-            </p>
-            <p style={{ fontSize: "10.5pt" }} className="font-semibold opacity-60">
-              צפייה והזמנה מהטלפון
-            </p>
-          </div>
-        </div>
+        {/* קוד QR — קנבס 850px ב-90mm (~240 DPI) */}
+        <StyledQr data={link} logo={logo} size={850} displaySize="90mm" mono={mono} />
 
-        {/* תחתית — קריאה לפעולה והנחה */}
+        {/* תחתית — קריאה לפעולה */}
         <div className="flex flex-col items-center pb-[4mm]">
           <p style={{ fontSize: "30pt" }} className="font-extrabold">
-            סרקו והזמינו עכשיו
+            {isClub ? "סרקו והצטרפו עכשיו" : "סרקו וצפו בתפריט"}
           </p>
           <div
             style={{ fontSize: "24pt" }}
@@ -111,10 +88,12 @@ export default function PosterA4({
                 : "bg-cheese-400/15 text-cheese-300 ring-[0.35mm] ring-cheese-400/50"
             }`}
           >
-            {settings.discountPercent}% הנחה לחברי המועדון
+            {isClub
+              ? `${settings.discountPercent}% הנחה לחברי המועדון`
+              : "התפריט המלא · מהטלפון שלכם"}
           </div>
           <p style={{ fontSize: "14pt" }} className="mt-[4mm] font-semibold opacity-60">
-            ההצטרפות חינם · לוקחת 10 שניות
+            {isClub ? "ההצטרפות חינם · לוקחת 10 שניות" : "עיינו, בחרו והזמינו 🍕"}
           </p>
         </div>
       </div>

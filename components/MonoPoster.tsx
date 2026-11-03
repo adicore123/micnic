@@ -7,21 +7,22 @@ import PosterA4 from "./PosterA4";
 import type { PublicSettings } from "@/lib/db/types";
 
 /**
- * מסך הפוסטר השחור-לבן: תצוגה מקדימה נוחה במסך, ובהדפסה — פריסת A4 מלאה
- * (210×297mm) שעוצבה במיוחד למדפסות מונו.
+ * מסך פוסטר שחור-לבן למדפסות מונו — גרסת A4 מלאה במסר אחד:
+ * mode="club" (הצטרפות למועדון) או mode="menu" (התפריט הדיגיטלי).
  */
 export default function MonoPoster({
   settings,
+  mode,
   link,
-  menuLink,
   onClose,
 }: {
   settings: PublicSettings;
+  mode: "club" | "menu";
   link: string;
-  menuLink: string;
   onClose: () => void;
 }) {
   const [qr, setQr] = useState<QRCodeStyling | null>(null);
+  const isClub = mode === "club";
 
   // בהדפסה מהמסך הזה מודפס רק הפוסטר השחור-לבן
   useEffect(() => {
@@ -34,9 +35,11 @@ export default function MonoPoster({
       <div className="mx-auto w-full max-w-md">
         <div className="no-print mb-5 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-extrabold text-crust-900">גרסה שחור-לבן להדפסה ב-A4</h3>
+            <h3 className="text-lg font-extrabold text-crust-900">
+              {isClub ? "פוסטר המועדון" : "פוסטר התפריט"} — שחור-לבן ל-A4
+            </h3>
             <p className="mt-0.5 text-sm text-crust-700/60">
-              מותאמת למדפסות שחור-לבן — ממלאת עמוד A4 שלם, חדה וחסכונית בדיו
+              מותאם למדפסות שחור-לבן — ממלא עמוד A4 שלם, חדה וחסכונית בדיו
             </p>
           </div>
           <button
@@ -63,22 +66,24 @@ export default function MonoPoster({
             />
 
             <h4 className="mt-5 text-3xl font-extrabold leading-tight text-black">{settings.businessName}</h4>
-            <p className="mt-1 text-lg font-bold text-black">מועדון הלקוחות</p>
+            <p className="mt-1 text-lg font-bold text-black">{isClub ? "מועדון הלקוחות" : "התפריט הדיגיטלי"}</p>
 
             <div aria-hidden="true" className="mt-5 border-t-4 border-double border-black" />
 
             <StyledQr data={link} logo={settings.logo} size={850} displaySize={280} mono onReady={setQr} className="mx-auto mt-6" />
 
-            <p className="mt-6 text-xl font-extrabold text-black">סרקו והצטרפו עכשיו</p>
+            <p className="mt-6 text-xl font-extrabold text-black">{isClub ? "סרקו והצטרפו עכשיו" : "סרקו וצפו בתפריט"}</p>
             <div className="mx-auto mt-3 w-fit rounded-xl border-2 border-black px-6 py-2.5 text-lg font-extrabold text-black">
-              {settings.discountPercent}% הנחה לחברי המועדון
+              {isClub ? `${settings.discountPercent}% הנחה לחברי המועדון` : "התפריט המלא · מהטלפון שלכם"}
             </div>
-            <p className="mt-3 text-sm font-semibold text-black/70">ההצטרפות חינם · לוקחת 10 שניות</p>
+            <p className="mt-3 text-sm font-semibold text-black/70">
+              {isClub ? "ההצטרפות חינם · לוקחת 10 שניות" : "עיינו, בחרו והזמינו 🍕"}
+            </p>
           </div>
 
           {/* פריסת A4 — הדפסה בלבד */}
           <div className="hidden print:block force-colors">
-            <PosterA4 settings={settings} link={link} menuLink={menuLink} mono />
+            <PosterA4 settings={settings} mode={mode} link={link} mono />
           </div>
         </div>
 
@@ -92,7 +97,7 @@ export default function MonoPoster({
           </button>
           <button
             type="button"
-            onClick={() => qr?.download({ name: "micnic-qr-black-white", extension: "png" })}
+            onClick={() => qr?.download({ name: isClub ? "micnic-club-qr-bw" : "micnic-menu-qr-bw", extension: "png" })}
             disabled={!qr}
             className="rounded-xl border border-crust-700/20 bg-white px-6 py-3.5 font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 active:scale-[0.99] disabled:opacity-50"
           >
