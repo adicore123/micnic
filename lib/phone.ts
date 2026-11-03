@@ -32,9 +32,23 @@ export const joinSchema = z.object({
   phone: phoneSchema,
 });
 
+/** יום הולדת בפורמט DD/MM — מנורמל עם אפסים מובילים */
+export const birthdaySchema = z
+  .string()
+  .trim()
+  .regex(/^\d{1,2}[\/.]\d{1,2}$/, "תאריך לידה לא תקין. לדוגמה: 25/03")
+  .refine((v) => {
+    const [d, m] = v.split(/[\D]/).map(Number);
+    return m >= 1 && m <= 12 && d >= 1 && d <= 31;
+  }, "תאריך לידה לא תקין. לדוגמה: 25/03")
+  .transform((v) => {
+    const [d, m] = v.split(/[\D]/).map((n) => Number(n).toString().padStart(2, "0"));
+    return `${d}/${m}`;
+  });
+
 /** הצטרפות למועדון — מחייבת אישור מפורש של הלקוח */
 export const joinWithConsentSchema = joinSchema
-  .extend({ consent: z.boolean() })
+  .extend({ consent: z.boolean(), birthday: z.optional(z.union([z.literal(""), birthdaySchema])) })
   .refine((v) => v.consent === true, {
     message: "נדרש אישור ההצטרפות למועדון הלקוחות",
     path: ["consent"],

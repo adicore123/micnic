@@ -21,5 +21,13 @@ export const DEFAULT_SETTINGS: Settings = {
     "{link}",
   ].join("\n"),
   businessPhone: "",
+  stampGoal: 10,
+  stampReward: "פיצה משפחתית חינם 🍕",
+  birthdayTemplate: [
+    "🎂 המון מזל טוב {name}!",
+    "במתנה מאיתנו ליום הולדתך — {reward} בהזמנה הקרובה 🎁",
+    "מספיק לציין את ההודעה בהזמנה.",
+    "— צוות {business} 🍕",
+  ].join("\n"),
   adminPassword: "micnic2026",
 };

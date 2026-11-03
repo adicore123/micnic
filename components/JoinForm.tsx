@@ -30,8 +30,9 @@ export default function JoinForm({
 }: Props) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthday, setBirthday] = useState("");
   const [consent, setConsent] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; phone?: string; consent?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; birthday?: string; consent?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
@@ -43,11 +44,11 @@ export default function JoinForm({
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const parsed = joinWithConsentSchema.safeParse({ name, phone, consent });
+    const parsed = joinWithConsentSchema.safeParse({ name, phone, consent, birthday: birthday.trim() || "" });
     if (!parsed.success) {
       const next: typeof errors = {};
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as "name" | "phone" | "consent";
+        const key = issue.path[0] as keyof typeof errors;
         next[key] ??= issue.message;
       }
       setErrors(next);
@@ -119,6 +120,23 @@ export default function JoinForm({
           className={`${fieldClass} text-right`}
         />
         {errors.phone && <p className="mt-1.5 text-sm text-tomato-400">{errors.phone}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="join-birthday" className={`mb-1.5 block ${labelClass}`}>
+          תאריך לידה <span className="font-normal opacity-60">(לא חובה — כדי שנוכל לפנק אותך במתנה 🎂)</span>
+        </label>
+        <input
+          id="join-birthday"
+          type="text"
+          inputMode="numeric"
+          dir="ltr"
+          value={birthday}
+          onChange={(e) => setBirthday(e.target.value)}
+          placeholder="25/03"
+          className={`${fieldClass} text-right`}
+        />
+        {errors.birthday && <p className="mt-1.5 text-sm text-tomato-400">{errors.birthday}</p>}
       </div>
 
       {/* אישור הצטרפות מפורש — חובה */}
