@@ -71,7 +71,7 @@ export default function StyledQr({
   return (
     <div
       ref={ref}
-      className={className}
+      className={`qr-box ${className ?? ""}`}
       style={{ width: displaySize ?? size, height: displaySize ?? size }}
     />
   );

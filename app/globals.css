@@ -121,6 +121,14 @@ body {
   animation: draw-check 0.65s ease-out 0.2s forwards;
 }
 
+/* הקנבס של ה-QR ממלא את הקונטיינר שלו — רזולוציה גבוהה (להדפסה חדה) מוצגת בגודל התצוגה */
+.qr-box canvas,
+.qr-box svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
 /* ---------- כפתור וואטסאפ ---------- */
 .btn-wa {
   position: relative;
