@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import Barcode from "./Barcode";
 import type { Customer, PublicSettings } from "@/lib/db/types";
@@ -8,6 +9,11 @@ const pad = (n: number) => String(n).padStart(4, "0");
 
 /** כרטיס חבר בגרסה מותאמת הדפסה — ברקוד כהה וגדול על רקע בהיר (קריא לסורקים) */
 export default function PrintCardView({ customer, settings }: { customer: Customer; settings: PublicSettings }) {
+  // מרווחי עמוד נוחים סביב הכרטיס בהדפסה
+  useEffect(() => {
+    document.body.classList.add("print-card-page");
+    return () => document.body.classList.remove("print-card-page");
+  }, []);
   return (
     <div className="flex min-h-[75vh] flex-col items-center justify-center gap-6">
       <div className="no-print flex flex-col items-center gap-2 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3">

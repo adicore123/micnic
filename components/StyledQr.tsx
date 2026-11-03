@@ -6,7 +6,10 @@ import QRCodeStyling from "qr-code-styling";
 type Props = {
   data: string;
   logo: string;
+  /** רזולוציית הקנבס בפיקסלים — להדפסה כדאי גבוה (למשל 850) */
   size?: number;
+  /** גודל התצוגה — פיקסלים או מחרוזת CSS כמו "78mm" (ברירת מחדל: כמו size) */
+  displaySize?: number | string;
   /** יחס גודל הלוגו במרכז הקוד (0-1) */
   logoRatio?: number;
   /** שחור-לבן טהור — מותאם להדפסה על מדפסות מונו */
@@ -16,7 +19,16 @@ type Props = {
 };
 
 /** קוד QR מעוצב — בגרסת הצבע: נקודות מעוגלות בגרדיאנט פחם-אדום; בגרסת mono: שחור חד על שקוף */
-export default function StyledQr({ data, logo, size = 280, logoRatio = 0.42, mono = false, onReady, className }: Props) {
+export default function StyledQr({
+  data,
+  logo,
+  size = 280,
+  displaySize,
+  logoRatio = 0.42,
+  mono = false,
+  onReady,
+  className,
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,5 +68,11 @@ export default function StyledQr({ data, logo, size = 280, logoRatio = 0.42, mon
     };
   }, [data, logo, size, logoRatio, mono, onReady]);
 
-  return <div ref={ref} className={className} style={{ width: size, height: size }} />;
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{ width: displaySize ?? size, height: displaySize ?? size }}
+    />
+  );
 }

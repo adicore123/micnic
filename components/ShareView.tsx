@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type QRCodeStyling from "qr-code-styling";
 import StyledQr from "./StyledQr";
 import MonoPoster from "./MonoPoster";
+import PosterA4 from "./PosterA4";
 import WhatsAppButton from "./WhatsAppButton";
 import { normalizePhone, PHONE_HINT } from "@/lib/phone";
 import { renderInvite, waLink } from "@/lib/whatsapp";
@@ -113,11 +114,9 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
 
       {/* פוסטר QR לדלפק */}
       <section>
-        <div
-          className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10 ${
-            monoOpen ? "" : "print-target force-colors"
-          }`}
-        >
+        <div className={`force-colors ${monoOpen ? "" : "print-target"}`}>
+          {/* תצוגה מקדימה במסך בלבד */}
+          <div className="print:hidden relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-crust-800 to-crust-950 p-8 text-center shadow-2xl sm:p-10">
           <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-tomato-500/25 blur-[100px]" />
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-0 h-64 w-64 rounded-full bg-cheese-400/15 blur-[100px]" />
 
@@ -138,7 +137,7 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
 
           <div className="relative mx-auto mt-7 w-fit rounded-[1.75rem] bg-cream-50 p-5 shadow-inner sm:p-6">
             {link ? (
-              <StyledQr data={link} logo={settings.logo} size={270} onReady={setQr} />
+              <StyledQr data={link} logo={settings.logo} size={850} displaySize={270} onReady={setQr} />
             ) : (
               <div className="h-[270px] w-[270px] animate-pulse rounded-2xl bg-cream-200" />
             )}
@@ -149,6 +148,12 @@ export default function ShareView({ settings }: { settings: PublicSettings }) {
             {settings.discountPercent}% הנחה לחברי המועדון
           </div>
           <p className="relative mt-4 text-sm text-cream-200/50">ההצטרפות לוקחת 10 שניות 📱</p>
+          </div>
+
+          {/* פריסת A4 מלאה — הדפסה בלבד */}
+          <div className="hidden print:block">
+            <PosterA4 settings={settings} link={link} />
+          </div>
         </div>
 
         <div className="no-print mt-4 flex flex-wrap justify-center gap-3">
