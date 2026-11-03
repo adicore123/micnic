@@ -61,6 +61,7 @@ export const jsonStore: Store = {
         phone: input.phone,
         cardNumber: db.customers.reduce((max, c) => Math.max(max, c.cardNumber), 100) + 1,
         createdAt: new Date().toISOString(),
+        consentAt: new Date().toISOString(),
       };
       db.customers.push(customer);
       return customer;

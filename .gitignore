@@ -46,3 +46,6 @@ next-env.d.ts
 
 # local database (customers + settings with password) — never commit
 /data
+
+.vercel
+.env*

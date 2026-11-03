@@ -63,12 +63,14 @@ export const mongoStore: Store = {
   async addCustomer(input: NewCustomer) {
     const { customers } = await collections();
     const last = await customers.find().sort({ cardNumber: -1 }).limit(1).toArray();
+    const now = new Date().toISOString();
     const customer: Customer = {
       id: randomUUID(),
       name: input.name,
       phone: input.phone,
       cardNumber: (last[0]?.cardNumber ?? 100) + 1,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      consentAt: now,
     };
     await customers.insertOne(customer);
     return customer;

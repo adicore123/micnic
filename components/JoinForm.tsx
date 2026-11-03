@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { joinSchema, PHONE_HINT } from "@/lib/phone";
+import { joinWithConsentSchema, PHONE_HINT } from "@/lib/phone";
 import type { Customer } from "@/lib/db/types";
 
 export type JoinResult = {
@@ -15,24 +15,39 @@ type Props = {
   onDone: (result: JoinResult) => void;
   dark?: boolean;
   submitLabel?: string;
+  /** adminMode = הצוות מעיד על אישור הלקוח בעל פה; אחרת הלקוח מאשר בעצמו */
+  adminMode?: boolean;
+  consentText?: string;
 };
 
-/** טופס הצטרפות עם שני שדות בלבד — שם וטלפון */
-export default function JoinForm({ onDone, dark = true, submitLabel = "הצטרפות למועדון 🍕" }: Props) {
+/** טופס הצטרפות עם שם, טלפון ואישור הצטרפות מפורש */
+export default function JoinForm({
+  onDone,
+  dark = true,
+  submitLabel = "הצטרפות למועדון 🍕",
+  adminMode = false,
+  consentText,
+}: Props) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
+  const [consent, setConsent] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; consent?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
 
+  const defaultConsent = adminMode
+    ? "הלקוח אישר בעל פה את הצטרפותו למועדון ואת קבלת ההטבות בוואטסאפ"
+    : `אני מאשר/ת להצטרף למועדון הלקוחות ולקבל הטבות ועדכונים בוואטסאפ`;
+  const consentLabel = consentText ?? defaultConsent;
+
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const parsed = joinSchema.safeParse({ name, phone });
+    const parsed = joinWithConsentSchema.safeParse({ name, phone, consent });
     if (!parsed.success) {
-      const next: { name?: string; phone?: string } = {};
+      const next: typeof errors = {};
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as "name" | "phone";
+        const key = issue.path[0] as "name" | "phone" | "consent";
         next[key] ??= issue.message;
       }
       setErrors(next);
@@ -66,6 +81,9 @@ export default function JoinForm({ onDone, dark = true, submitLabel = "הצטר�
 
   const fieldClass = dark ? "field" : "field-light";
   const labelClass = dark ? "text-sm font-semibold text-cream-200" : "text-sm font-semibold text-crust-700";
+  const checkboxClass = dark
+    ? "h-5 w-5 shrink-0 accent-[#F2B441]"
+    : "h-5 w-5 shrink-0 accent-basil-600";
 
   return (
     <form key={shakeKey} onSubmit={submit} noValidate className={`w-full space-y-4 ${shakeKey ? "anim-shake" : ""}`}>
@@ -101,6 +119,22 @@ export default function JoinForm({ onDone, dark = true, submitLabel = "הצטר�
           className={`${fieldClass} text-right`}
         />
         {errors.phone && <p className="mt-1.5 text-sm text-tomato-400">{errors.phone}</p>}
+      </div>
+
+      {/* אישור הצטרפות מפורש — חובה */}
+      <div>
+        <label className={`flex cursor-pointer items-start gap-3 ${dark ? "text-cream-200" : "text-crust-700"}`}>
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className={`${checkboxClass} mt-0.5`}
+          />
+          <span className="text-sm leading-relaxed">{consentLabel}</span>
+        </label>
+        {errors.consent && (
+          <p className={`mt-1.5 text-sm ${dark ? "text-tomato-400" : "text-tomato-600"}`}>{errors.consent}</p>
+        )}
       </div>
 
       {serverError && (

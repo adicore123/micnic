@@ -31,3 +31,11 @@ export const joinSchema = z.object({
   name: z.string().trim().min(2, "השם קצר מדי (לפחות 2 תווים)").max(40, "השם ארוך מדי (עד 40 תווים)"),
   phone: phoneSchema,
 });
+
+/** הצטרפות למועדון — מחייבת אישור מפורש של הלקוח */
+export const joinWithConsentSchema = joinSchema
+  .extend({ consent: z.boolean() })
+  .refine((v) => v.consent === true, {
+    message: "נדרש אישור ההצטרפות למועדון הלקוחות",
+    path: ["consent"],
+  });

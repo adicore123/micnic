@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import JoinForm, { type JoinResult } from "./JoinForm";
 import SuccessView from "./SuccessView";
 import WhatsAppButton from "./WhatsAppButton";
-import { menuMessage, menuUrl, renderMessage, waLink } from "@/lib/whatsapp";
-import { displayPhone, joinSchema } from "@/lib/phone";
+import { menuMessage, menuUrl, renderInvite, renderMessage, waLink } from "@/lib/whatsapp";
+import { displayPhone, joinSchema, normalizePhone, PHONE_HINT } from "@/lib/phone";
 import type { Customer, PublicSettings } from "@/lib/db/types";
 
 const pad = (n: number) => String(n).padStart(4, "0");
@@ -24,10 +24,29 @@ export default function AdminDashboard({
   const [result, setResult] = useState<JoinResult | null>(null);
   const [query, setQuery] = useState("");
   const [origin, setOrigin] = useState<string | null>(null);
+  const [addMode, setAddMode] = useState<"present" | "absent">("present");
+  const [absentPhone, setAbsentPhone] = useState("");
+  const [absentError, setAbsentError] = useState<string | null>(null);
+  const [absentSent, setAbsentSent] = useState<string | null>(null);
 
   useEffect(() => setOrigin(window.location.origin), []);
 
   const menuLink = useMemo(() => (origin ? menuUrl(origin) : ""), [origin]);
+  const joinLink = origin ? `${origin}/` : "";
+  const inviteLink = useMemo(
+    () => (joinLink ? waLink(absentPhone.trim(), renderInvite(settings.inviteTemplate, settings, joinLink)) : "#"),
+    [absentPhone, settings, joinLink],
+  );
+
+  function sendAbsentInvite(e: React.MouseEvent) {
+    if (!normalizePhone(absentPhone)) {
+      e.preventDefault();
+      setAbsentError("מספר הטלפון לא נראה תקין. לדוגמה: 050-1234567");
+      return;
+    }
+    setAbsentError(null);
+    setAbsentSent("הקישור נפתח בוואטסאפ — אחרי השליחה הלקוח יצטרף בעצמו עם אישורו");
+  }
 
   // עריכת לקוח
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -112,19 +131,86 @@ export default function AdminDashboard({
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[400px_1fr]">
-      {/* הוספת לקוח */}
+      {/* הוספת לקוח — עם אישור הסכמה */}
       <section className="h-fit rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-extrabold text-crust-900">הוספת לקוח חדש</h2>
-        <p className="mb-5 mt-1 text-sm leading-relaxed text-crust-700/60">
-          מלאו שם וטלפון, ואז שלחו את הודעת התודה וההנחה בוואטסאפ — בלחיצה אחת
-        </p>
+        <h2 className="text-lg font-extrabold text-crust-900">הוספת לקוח למועדון</h2>
 
-        {result ? (
-          <div className="rounded-2xl bg-crust-900 p-5">
-            <SuccessView result={result} settings={settings} mode="staff" onReset={() => setResult(null)} />
-          </div>
+        {/* החלפת מצב */}
+        <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl bg-cream-100 p-1.5">
+          <button
+            type="button"
+            onClick={() => setAddMode("present")}
+            className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${
+              addMode === "present" ? "bg-white text-crust-900 shadow-sm" : "text-crust-700/60 hover:text-crust-900"
+            }`}
+          >
+            🙋 הלקוח לפניי
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddMode("absent")}
+            className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${
+              addMode === "absent" ? "bg-white text-crust-900 shadow-sm" : "text-crust-700/60 hover:text-crust-900"
+            }`}
+          >
+            📲 הלקוח לא נמצא
+          </button>
+        </div>
+
+        {addMode === "present" ? (
+          <>
+            <p className="mb-5 mt-4 text-sm leading-relaxed text-crust-700/60">
+              הלקוח נמצא במקום: ממלאים את פרטיו, מאשרים את הסכמתו בעל פה — ושולחים את הודעת התודה וההנחה
+              בוואטסאפ בלחיצה אחת
+            </p>
+            {result ? (
+              <div className="rounded-2xl bg-crust-900 p-5">
+                <SuccessView result={result} settings={settings} mode="staff" onReset={() => setResult(null)} />
+              </div>
+            ) : (
+              <JoinForm dark={false} adminMode onDone={handleDone} submitLabel="הוספה למועדון 🍕" />
+            )}
+          </>
         ) : (
-          <JoinForm dark={false} onDone={handleDone} submitLabel="הוספה למועדון 🍕" />
+          <div className="mt-4">
+            <p className="mb-4 text-sm leading-relaxed text-crust-700/60">
+              הלקוח לא נמצא כאן? לא מוסיפים אותו ישירות — שולחים לו קישור הצטרפות בוואטסאפ, והוא ימלא את
+              שמו ו<strong>יאשר את הצטרפותו בעצמו</strong>. הלקוח יתווסף לרשימה אוטומטית לאחר האישור.
+            </p>
+
+            <label htmlFor="absent-phone" className="mb-1.5 block text-sm font-semibold text-crust-700">
+              טלפון הלקוח
+            </label>
+            <input
+              id="absent-phone"
+              type="tel"
+              dir="ltr"
+              inputMode="tel"
+              value={absentPhone}
+              onChange={(e) => {
+                setAbsentPhone(e.target.value);
+                setAbsentSent(null);
+              }}
+              placeholder="050-1234567"
+              className="field-light mb-2 text-right text-lg"
+            />
+            {absentError && <p className="mb-3 text-sm font-semibold text-tomato-600">{absentError}</p>}
+            <p className="mb-3 text-xs text-crust-700/50">{PHONE_HINT}</p>
+
+            <WhatsAppButton
+              className="w-full justify-center"
+              href={inviteLink}
+              onClick={sendAbsentInvite}
+              label="שליחת קישור הצטרפות"
+              sub="הלקוח יאשר את הצטרפותו בעצמו"
+            />
+
+            {absentSent && (
+              <p className="mt-4 rounded-xl bg-basil-500/10 px-4 py-3 text-sm font-semibold text-basil-600">
+                ✓ {absentSent}
+              </p>
+            )}
+          </div>
         )}
       </section>
 
@@ -177,7 +263,19 @@ export default function AdminDashboard({
                       <td className="px-4 py-3 font-mono text-xs text-crust-700/70" dir="ltr">
                         #{pad(c.cardNumber)}
                       </td>
-                      <td className="max-w-40 truncate px-4 py-3 font-bold text-crust-900">{c.name}</td>
+                      <td className="max-w-40 truncate px-4 py-3 font-bold text-crust-900">
+                        {c.name}
+                        {c.consentAt && (
+                          <span
+                            title={`אישר הצטרפות בתאריך ${dateFmt.format(new Date(c.consentAt))}`}
+                            className="ms-1.5 inline-block align-middle text-basil-600"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="inline h-4 w-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-crust-700" dir="ltr">
                         {displayPhone(c.phone)}
                       </td>

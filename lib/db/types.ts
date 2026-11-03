@@ -5,6 +5,8 @@ export type Customer = {
   phone: string;
   cardNumber: number;
   createdAt: string;
+  /** מועד אישור ההצטרפות של הלקוח (הסכמה מפורשת) */
+  consentAt?: string;
 };
 
 export type NewCustomer = { name: string; phone: string };
