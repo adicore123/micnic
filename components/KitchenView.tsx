@@ -1,16 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { fileToResizedDataUrl } from "@/lib/image";
 import type { KitchenDish } from "@/lib/kitchen";
+import type { RecipeEntry } from "@/lib/db/types";
 
 type Props = {
   dishes: KitchenDish[];
-  initialRecipes: Record<string, string>;
+  initialRecipes: Record<string, RecipeEntry>;
   /** readOnly = מצב טבחים — צפייה בלבד, בלי שום כפתור עריכה */
   readOnly?: boolean;
 };
 
-/** מודול מטבח — הוראות הכנה לכל מנה, מותאם מובייל לטבחים */
+/** מודול מטבח — הוראות הכנה ותמונת מנה לכל מנה, מותאם מובייל לטבחים */
 export default function KitchenView({ dishes, initialRecipes, readOnly = false }: Props) {
   const [recipes, setRecipes] = useState(initialRecipes);
   const [query, setQuery] = useState("");
@@ -20,6 +22,8 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
   const [editText, setEditText] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [photoPending, setPhotoPending] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const cats = useMemo(() => {
     const order = new Map<string, { key: string; label: string; count: number }>();
@@ -36,9 +40,13 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
     return dishes.filter((d) => {
       if (cat !== "all" && d.cat !== cat) return false;
       if (!q) return true;
-      return d.name.includes(q) || d.desc.includes(q) || (recipes[d.id] ?? "").includes(q);
+      return d.name.includes(q) || d.desc.includes(q) || (recipes[d.id]?.steps ?? "").includes(q);
     });
   }, [dishes, cat, query, recipes]);
+
+  function entry(dishId: string): RecipeEntry {
+    return recipes[dishId] ?? { steps: "" };
+  }
 
   function open(d: KitchenDish, startInEdit = false) {
     setOpenDish(d);
@@ -46,17 +54,27 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
     if (readOnly || !startInEdit) {
       setEditing(false);
     } else {
-      setEditText(recipes[d.id] ?? "");
+      setEditText(entry(d.id).steps);
       setEditing(true);
     }
   }
 
   function startEdit() {
-    setEditText(recipes[openDish!.id] ?? "");
+    setEditText(entry(openDish!.id).steps);
     setEditing(true);
   }
 
-  async function saveRecipe() {
+  function patchRecipe(dishId: string, patch: { steps?: string; image?: string | null }) {
+    setRecipes((prev) => {
+      const current = prev[dishId] ?? { steps: "" };
+      const next: RecipeEntry = { ...current, ...(patch.steps !== undefined ? { steps: patch.steps } : {}) };
+      if (patch.image === null) delete next.image;
+      else if (patch.image !== undefined) next.image = patch.image;
+      return { ...prev, [dishId]: next };
+    });
+  }
+
+  async function saveSteps() {
     if (!openDish || saving) return;
     setSaving(true);
     setSaveError(null);
@@ -68,11 +86,46 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
     setSaving(false);
 
     if (res?.ok) {
-      setRecipes((prev) => ({ ...prev, [openDish.id]: editText.trim() }));
+      patchRecipe(openDish.id, { steps: editText.trim() });
       setEditing(false);
     } else {
       setSaveError("השמירה נכשלה — נסו שוב");
     }
+  }
+
+  async function savePhoto(file: File | undefined | null) {
+    if (!file || !openDish || photoPending) return;
+    setPhotoPending(true);
+    setSaveError(null);
+    try {
+      const dataUrl = await fileToResizedDataUrl(file);
+      const res = await fetch("/api/kitchen", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dishId: openDish.id, image: dataUrl }),
+      }).catch(() => null);
+      if (res?.ok) {
+        patchRecipe(openDish.id, { image: dataUrl });
+      } else {
+        setSaveError("שמירת התמונה נכשלה — נסו שוב");
+      }
+    } catch {
+      setSaveError("קריאת התמונה נכשלה — נסו שוב");
+    } finally {
+      setPhotoPending(false);
+    }
+  }
+
+  async function removePhoto() {
+    if (!openDish || photoPending) return;
+    setPhotoPending(true);
+    const res = await fetch("/api/kitchen", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dishId: openDish.id, image: null }),
+    }).catch(() => null);
+    setPhotoPending(false);
+    if (res?.ok) patchRecipe(openDish.id, { image: null });
   }
 
   const catChip = (key: string, label: string, count?: number) => (
@@ -94,6 +147,8 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
       )}
     </button>
   );
+
+  const openImage = openDish ? entry(openDish.id).image : undefined;
 
   return (
     <div>
@@ -118,38 +173,53 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
       ) : (
         <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((d) => {
-            const hasRecipe = Boolean(recipes[d.id]?.trim());
+            const e = entry(d.id);
+            const hasRecipe = Boolean(e.steps.trim());
             return (
               <li key={d.id} className="relative">
                 <button
                   type="button"
                   onClick={() => open(d)}
-                  className="w-full rounded-2xl border border-crust-700/10 bg-white p-4 text-start shadow-sm transition hover:shadow-md active:scale-[0.99]"
+                  className="flex w-full gap-3 rounded-2xl border border-crust-700/10 bg-white p-3.5 text-start shadow-sm transition hover:shadow-md active:scale-[0.99]"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-lg font-extrabold text-crust-900">{d.name}</span>
-                    <span className="shrink-0 rounded-full bg-cream-100 px-2.5 py-1 text-sm font-extrabold text-crust-700">
-                      {d.price}₪
-                    </span>
-                  </div>
-                  <p className="mt-1 line-clamp-2 min-h-10 text-sm leading-relaxed text-crust-700/70">{d.desc || "—"}</p>
-                  <div className="mt-2.5">
-                    {hasRecipe ? (
-                      <span className="rounded-full bg-basil-500/10 px-3 py-1 text-xs font-extrabold text-basil-600">
-                        ✓ יש הוראות הכנה
+                  {e.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={e.image}
+                      alt={d.name}
+                      className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-crust-700/10"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-cream-100 text-2xl" aria-hidden="true">
+                      🍽️
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-lg font-extrabold text-crust-900">{d.name}</span>
+                      <span className="shrink-0 rounded-full bg-cream-100 px-2.5 py-1 text-sm font-extrabold text-crust-700">
+                        {d.price}₪
                       </span>
-                    ) : (
-                      <span className="rounded-full bg-cheese-400/15 px-3 py-1 text-xs font-bold text-cheese-500">
-                        ✎ אין עדיין הוראות — לחצו להוספה
-                      </span>
-                    )}
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-crust-700/70">{d.desc || "—"}</p>
+                    <div className="mt-1.5">
+                      {hasRecipe ? (
+                        <span className="rounded-full bg-basil-500/10 px-3 py-1 text-xs font-extrabold text-basil-600">
+                          ✓ הוראות הכנה
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-cheese-400/15 px-3 py-1 text-xs font-bold text-cheese-500">
+                          אין עדיין הוראות
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </button>
                 {!readOnly && (
                   <button
                     type="button"
                     onClick={() => open(d, true)}
-                    title={`עריכת הוראות ${d.name}`}
+                    title={`עריכת ${d.name}`}
                     aria-label={`עריכת הוראות ${d.name}`}
                     className="absolute left-3 top-3 rounded-xl bg-crust-900/5 p-2 text-crust-700/60 transition hover:bg-cheese-400/20 hover:text-cheese-600 active:scale-95"
                   >
@@ -194,6 +264,60 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
 
             {/* תוכן נגלל */}
             <div className="flex-1 overflow-y-auto px-5 py-5">
+              {/* תמונת המנה — כך המנה אמורה להיראות */}
+              {openImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={openImage}
+                  alt={openDish.name}
+                  className="mb-5 aspect-[4/3] w-full rounded-2xl object-cover shadow-md ring-1 ring-crust-700/10"
+                />
+              ) : editing ? (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={photoPending}
+                  className="mb-5 flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-crust-700/20 bg-cream-50 text-crust-700/50 transition hover:border-cheese-500/50 hover:bg-cream-100 disabled:opacity-60"
+                >
+                  <span className="text-4xl">📷</span>
+                  <span className="text-sm font-bold">{photoPending ? "שומר תמונה…" : "צילום המנה / העלאת תמונה"}</span>
+                  <span className="text-xs">כך כולם יראו איך המנה אמורה לצאת</span>
+                </button>
+              ) : null}
+
+              {editing && openImage && (
+                <div className="mb-5 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={photoPending}
+                    className="rounded-xl border border-crust-700/15 bg-white px-4 py-2.5 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-100 disabled:opacity-60"
+                  >
+                    📷 {photoPending ? "שומר…" : "החלפת התמונה"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    disabled={photoPending}
+                    className="rounded-xl border border-tomato-500/20 bg-white px-4 py-2.5 text-sm font-bold text-tomato-600 shadow-sm transition hover:bg-tomato-500/10 disabled:opacity-60"
+                  >
+                    🗑 הסרת תמונה
+                  </button>
+                </div>
+              )}
+
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  void savePhoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+
               <h4 className="text-sm font-extrabold uppercase tracking-wide text-crust-700/50">מרכיבים</h4>
               <p className="mt-1.5 text-lg leading-relaxed text-crust-800">{openDish.desc || "אין תיאור מרכיבים בתפריט"}</p>
 
@@ -214,7 +338,7 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
                   <div className="mt-3 flex gap-2">
                     <button
                       type="button"
-                      onClick={saveRecipe}
+                      onClick={saveSteps}
                       disabled={saving}
                       className="flex-1 rounded-xl bg-gradient-to-br from-basil-400 to-basil-600 px-6 py-3.5 text-lg font-extrabold text-white shadow-lg shadow-basil-600/25 transition hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
                     >
@@ -232,7 +356,7 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
               ) : (
                 <div className="mt-3">
                   <p className="whitespace-pre-line text-xl font-medium leading-loose text-crust-900">
-                    {recipes[openDish.id]?.trim() || "עדיין לא נכתבו הוראות הכנה למנה הזו"}
+                    {entry(openDish.id).steps.trim() || "עדיין לא נכתבו הוראות הכנה למנה הזו"}
                   </p>
                   {!readOnly && (
                     <button
@@ -240,7 +364,7 @@ export default function KitchenView({ dishes, initialRecipes, readOnly = false }
                       onClick={startEdit}
                       className="mt-5 w-full rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-6 py-3.5 text-lg font-extrabold text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.99]"
                     >
-                      ✎ {recipes[openDish.id]?.trim() ? "עריכת ההוראות" : "כתיבת הוראות הכנה"}
+                      ✎ {entry(openDish.id).steps.trim() ? "עריכת המנה (הוראות + תמונה)" : "כתיבת הוראות + צילום המנה"}
                     </button>
                   )}
                 </div>

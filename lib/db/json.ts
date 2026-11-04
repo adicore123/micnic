@@ -2,9 +2,9 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { DEFAULT_SETTINGS } from "../defaults";
-import type { Customer, NewCustomer, Settings, Store } from "./types";
+import type { Customer, NewCustomer, RecipeEntry, Settings, Store } from "./types";
 
-type DbFile = { customers: Customer[]; settings: Settings; recipes?: Record<string, string> };
+type DbFile = { customers: Customer[]; settings: Settings; recipes?: Record<string, RecipeEntry | string> };
 
 const dataDir = path.join(process.cwd(), "data");
 const dbFile = path.join(dataDir, "db.json");
@@ -15,6 +15,15 @@ const dbFile = path.join(dataDir, "db.json");
  */
 const globalForDb = globalThis as typeof globalThis & { __micnicDbLock?: Promise<unknown> };
 
+/** מנרמל ערכי רשומות ישנות (מחרוזת בלבד) לרשומה מלאה */
+function normalizeRecipes(raw: Record<string, RecipeEntry | string> | undefined): Record<string, RecipeEntry> {
+  const out: Record<string, RecipeEntry> = {};
+  for (const [key, value] of Object.entries(raw ?? {})) {
+    out[key] = typeof value === "string" ? { steps: value } : value;
+  }
+  return out;
+}
+
 /** קורא תמיד מהדיסק — הדיסק הוא מקור האמת, בלי מטמון זיכרון ישן */
 async function read(): Promise<DbFile> {
   try {
@@ -22,7 +31,7 @@ async function read(): Promise<DbFile> {
     return {
       customers: Array.isArray(parsed.customers) ? parsed.customers : [],
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
-      recipes: parsed.recipes ?? {},
+      recipes: normalizeRecipes(parsed.recipes),
     };
   } catch {
     return { customers: [], settings: { ...DEFAULT_SETTINGS }, recipes: {} };
@@ -104,12 +113,17 @@ export const jsonStore: Store = {
   },
 
   async getRecipes() {
-    return (await read()).recipes ?? {};
+    return normalizeRecipes((await read()).recipes);
   },
 
-  saveRecipe(dishId, steps) {
+  saveRecipe(dishId, patch) {
     return update((db) => {
-      db.recipes = { ...(db.recipes ?? {}), [dishId]: steps };
+      const recipes = normalizeRecipes(db.recipes);
+      const entry: RecipeEntry = { ...(recipes[dishId] ?? { steps: "" }) };
+      if (patch.steps !== undefined) entry.steps = patch.steps;
+      if (patch.image === null) delete entry.image;
+      else if (patch.image !== undefined) entry.image = patch.image;
+      db.recipes = { ...recipes, [dishId]: entry };
     });
   },
 };

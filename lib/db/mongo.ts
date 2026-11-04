@@ -3,10 +3,9 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { DEFAULT_SETTINGS } from "../defaults";
-import type { Customer, NewCustomer, Settings, Store } from "./types";
+import type { Customer, NewCustomer, RecipeEntry, Settings, Store } from "./types";
 
 type SettingsDoc = Settings & { _id: string };
-type RecipesDoc = { _id: string; recipes: Record<string, string> };
 
 const RECIPES_ID = "main";
 
@@ -128,14 +127,26 @@ export const mongoStore: Store = {
 
   async getRecipes() {
     const db = (await client()).db("micnic");
-    const doc = await db.collection<RecipesDoc>("recipes").findOne({ _id: RECIPES_ID });
-    return doc?.recipes ?? {};
+    const doc = await db
+      .collection<{ _id: string; recipes: Record<string, RecipeEntry | string> }>("recipes")
+      .findOne({ _id: RECIPES_ID });
+    // נרמול רשומות ישנות שנשמרו כמחרוזת בלבד
+    const out: Record<string, RecipeEntry> = {};
+    for (const [key, value] of Object.entries(doc?.recipes ?? {})) {
+      out[key] = typeof value === "string" ? { steps: value } : value;
+    }
+    return out;
   },
 
-  async saveRecipe(dishId, steps) {
+  async saveRecipe(dishId, patch) {
     const db = (await client()).db("micnic");
-    await db
-      .collection<RecipesDoc>("recipes")
-      .updateOne({ _id: RECIPES_ID }, { $set: { [`recipes.${dishId}`]: steps } }, { upsert: true });
+    const col = db.collection<{ _id: string; recipes: Record<string, RecipeEntry | string> }>("recipes");
+    const doc = await col.findOne({ _id: RECIPES_ID });
+    const raw = doc?.recipes?.[dishId];
+    const entry: RecipeEntry = typeof raw === "string" ? { steps: raw } : { ...(raw ?? { steps: "" }) };
+    if (patch.steps !== undefined) entry.steps = patch.steps;
+    if (patch.image === null) delete entry.image;
+    else if (patch.image !== undefined) entry.image = patch.image;
+    await col.updateOne({ _id: RECIPES_ID }, { $set: { [`recipes.${dishId}`]: entry } }, { upsert: true });
   },
 };

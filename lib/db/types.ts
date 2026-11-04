@@ -30,6 +30,9 @@ export type Settings = {
 /** הגדרות שמותר לחשוף ללקוח (בלי הסיסמה ובלי קוד המטבח) */
 export type PublicSettings = Omit<Settings, "adminPassword" | "kitchenPin">;
 
+/** הוראות הכנה + תמונת המנה לפי מזהה */
+export type RecipeEntry = { steps: string; image?: string };
+
 export interface Store {
   listCustomers(): Promise<Customer[]>;
   addCustomer(input: NewCustomer): Promise<Customer>;
@@ -39,7 +42,8 @@ export interface Store {
   updateCustomer(id: string, changes: NewCustomer): Promise<Customer | null>;
   getSettings(): Promise<Settings>;
   saveSettings(settings: Settings): Promise<void>;
-  /** הוראות הכנה לפי מזהה מנה */
-  getRecipes(): Promise<Record<string, string>>;
-  saveRecipe(dishId: string, steps: string): Promise<void>;
+  /** הוראות הכנה ותמונות לפי מזהה מנה */
+  getRecipes(): Promise<Record<string, RecipeEntry>>;
+  /** עדכון חלקי — image: null מסיר את התמונה */
+  saveRecipe(dishId: string, patch: { steps?: string; image?: string | null }): Promise<void>;
 }
