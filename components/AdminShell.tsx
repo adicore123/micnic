@@ -22,15 +22,6 @@ const NAV: NavItem[] = [
     ),
   },
   {
-    href: "/admin/campaigns",
-    label: "קמפיינים",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 11v2a1 1 0 001 1h2l4 4V6L6 10H4a1 1 0 00-1 1zM14 8a4 4 0 010 8M17 5a8 8 0 010 14" />
-      </svg>
-    ),
-  },
-  {
     href: "/admin/menu",
     label: "תפריט דיגיטלי",
     icon: (

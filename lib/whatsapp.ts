@@ -29,18 +29,6 @@ export function selfJoinMessage(businessName: string): string {
   return `היי ${businessName}! 🍕 הצטרפתי כרגע למועדון הלקוחות`;
 }
 
-/** הודעת יום הולדת — תומך ב-{name}, {business}, {reward} */
-export function renderBirthday(
-  template: string,
-  name: string,
-  settings: Pick<PublicSettings, "businessName" | "stampReward">,
-): string {
-  return template
-    .replaceAll("{name}", name)
-    .replaceAll("{business}", settings.businessName)
-    .replaceAll("{reward}", settings.stampReward);
-}
-
 /** כתובת התפריט הדיגיטלי */
 export function menuUrl(origin: string): string {
   return `${origin}/menu`;

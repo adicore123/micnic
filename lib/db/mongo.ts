@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { DEFAULT_SETTINGS } from "../defaults";
-import type { Customer, CustomerChanges, NewCustomer, Settings, Store } from "./types";
+import type { Customer, NewCustomer, Settings, Store } from "./types";
 
 type SettingsDoc = Settings & { _id: string };
 
@@ -79,7 +79,6 @@ export const mongoStore: Store = {
       cardNumber: (last[0]?.cardNumber ?? 100) + 1,
       createdAt: now,
       consentAt: now,
-      ...(input.birthday ? { birthday: input.birthday } : {}),
     };
     await customers.insertOne(customer);
     // insertOne מוסיף _id לאובייקט שהועבר — מחזירים עותק נקי
@@ -101,38 +100,14 @@ export const mongoStore: Store = {
     return stripId(await customers.findOne({ id }));
   },
 
-  async updateCustomer(id, changes: CustomerChanges) {
+  async updateCustomer(id, changes) {
     const { customers } = await collections();
-    const doc = await customers.findOne({ id });
-    if (!doc) return null;
-    doc.name = changes.name;
-    doc.phone = changes.phone;
-    doc.birthday = changes.birthday || undefined;
-    doc.tags = changes.tags?.length ? changes.tags : undefined;
-    doc.note = changes.note || undefined;
-    await customers.replaceOne({ id }, doc);
-    return stripId(doc);
-  },
-
-  async stampCustomer(id) {
-    const { customers } = await collections();
-    const doc = await customers.findOne({ id });
-    if (!doc) return null;
-    const goal = (await mongoStore.getSettings()).stampGoal ?? DEFAULT_SETTINGS.stampGoal;
-    doc.points = (doc.points ?? 0) + 1;
-    doc.visits = (doc.visits ?? 0) + 1;
-    doc.lastVisitAt = new Date().toISOString();
-    await customers.replaceOne({ id }, doc);
-    return { customer: stripId(doc)!, rewardReady: doc.points >= goal };
-  },
-
-  async redeemReward(id) {
-    const { customers } = await collections();
-    const doc = await customers.findOne({ id });
-    if (!doc) return null;
-    doc.points = 0;
-    await customers.replaceOne({ id }, doc);
-    return stripId(doc);
+    const updated = await customers.findOneAndUpdate(
+      { id },
+      { $set: { name: changes.name, phone: changes.phone } },
+      { returnDocument: "after" },
+    );
+    return stripId(updated);
   },
 
   async getSettings() {

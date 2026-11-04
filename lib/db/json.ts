@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { DEFAULT_SETTINGS } from "../defaults";
-import type { Customer, CustomerChanges, NewCustomer, Settings, Store } from "./types";
+import type { Customer, NewCustomer, Settings, Store } from "./types";
 
 type DbFile = { customers: Customer[]; settings: Settings };
 
@@ -62,7 +62,6 @@ export const jsonStore: Store = {
         cardNumber: db.customers.reduce((max, c) => Math.max(max, c.cardNumber), 100) + 1,
         createdAt: new Date().toISOString(),
         consentAt: new Date().toISOString(),
-        ...(input.birthday ? { birthday: input.birthday } : {}),
       };
       db.customers.push(customer);
       return customer;
@@ -89,29 +88,6 @@ export const jsonStore: Store = {
       if (!customer) return null;
       customer.name = changes.name;
       customer.phone = changes.phone;
-      customer.birthday = changes.birthday || undefined;
-      customer.tags = changes.tags?.length ? changes.tags : undefined;
-      customer.note = changes.note || undefined;
-      return { ...customer };
-    });
-  },
-
-  stampCustomer(id) {
-    return update((db) => {
-      const customer = db.customers.find((c) => c.id === id);
-      if (!customer) return null;
-      customer.points = (customer.points ?? 0) + 1;
-      customer.visits = (customer.visits ?? 0) + 1;
-      customer.lastVisitAt = new Date().toISOString();
-      return { customer: { ...customer }, rewardReady: customer.points >= (db.settings.stampGoal ?? 10) };
-    });
-  },
-
-  redeemReward(id) {
-    return update((db) => {
-      const customer = db.customers.find((c) => c.id === id);
-      if (!customer) return null;
-      customer.points = 0;
       return { ...customer };
     });
   },

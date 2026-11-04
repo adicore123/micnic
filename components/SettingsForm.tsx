@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { normalizePhone } from "@/lib/phone";
-import { renderBirthday, renderInvite, renderMessage } from "@/lib/whatsapp";
+import { renderInvite, renderMessage } from "@/lib/whatsapp";
 import type { PublicSettings } from "@/lib/db/types";
 
 const PLACEHOLDERS = [
@@ -28,11 +28,8 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
     businessName: initial.businessName,
     logo: initial.logo,
     discountPercent: String(initial.discountPercent),
-    stampGoal: String(initial.stampGoal ?? 10),
-    stampReward: initial.stampReward ?? "",
     messageTemplate: initial.messageTemplate,
     inviteTemplate: initial.inviteTemplate,
-    birthdayTemplate: initial.birthdayTemplate,
     businessPhone: initial.businessPhone ? initial.businessPhone.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1-$2-$3") : "",
     password: "",
     passwordConfirm: "",
@@ -49,15 +46,6 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
         discountPercent: Number(form.discountPercent) || 0,
       }),
     [form.messageTemplate, form.businessName, form.discountPercent],
-  );
-
-  const birthdayPreview = useMemo(
-    () =>
-      renderBirthday(form.birthdayTemplate, "דניאל", {
-        businessName: form.businessName.trim() || "העסק",
-        stampReward: form.stampReward.trim() || "הפרס",
-      }),
-    [form.birthdayTemplate, form.businessName, form.stampReward],
   );
 
   const invitePreview = useMemo(
@@ -123,19 +111,6 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
       setError("הסיסמאות לא תואמות");
       return;
     }
-    const stampGoalNum = Number(form.stampGoal);
-    if (!Number.isInteger(stampGoalNum) || stampGoalNum < 1 || stampGoalNum > 100) {
-      setError("יעד החותמות חייב להיות מספר שלם בין 1 ל-100");
-      return;
-    }
-    if (form.stampReward.trim().length < 2) {
-      setError("תיאור הפרס קצר מדי");
-      return;
-    }
-    if (form.birthdayTemplate.trim().length < 10) {
-      setError("הודעת יום ההולדת קצרה מדי");
-      return;
-    }
 
     setSaving(true);
     setError(null);
@@ -146,11 +121,8 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
         businessName: form.businessName,
         logo: form.logo,
         discountPercent: discount,
-        stampGoal: stampGoalNum,
-        stampReward: form.stampReward.trim(),
         messageTemplate: form.messageTemplate,
         inviteTemplate: form.inviteTemplate,
-        birthdayTemplate: form.birthdayTemplate,
         businessPhone: form.businessPhone ? normalizePhone(form.businessPhone)! : "",
         adminPassword: form.password,
       }),
@@ -334,66 +306,6 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
             <div className="min-h-40 bg-[#0B141A] p-4">
               <div className="wa-bubble-dark ml-6 w-fit max-w-full px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line">
                 {invitePreview}
-                <span className="mt-1 block text-left text-[10px] text-white/50">✓✓</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* כרטיס נקודות וימי הולדת */}
-      <section className="rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-extrabold text-crust-900">כרטיס הנקודות והימי הולדת</h2>
-        <p className="mb-5 mt-1 text-sm text-crust-700/60">
-          כל הזמנה = חותמה אצל הלקוח. בהגעה ליעד — הלקוח מקבל את הפרס והכרטיס מתאפס. בנוסף — מתנת יום הולדת לכל חבר
-        </p>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <div>
-            <label htmlFor="set-goal" className="mb-1.5 block text-sm font-semibold text-crust-700">
-              יעד חותמות לפרס
-            </label>
-            <input
-              id="set-goal"
-              type="number"
-              min={1}
-              max={100}
-              value={form.stampGoal}
-              onChange={(e) => set("stampGoal", e.target.value)}
-              className="field-light w-28 text-center text-xl font-extrabold"
-            />
-          </div>
-          <div className="min-w-56 flex-1">
-            <label htmlFor="set-reward" className="mb-1.5 block text-sm font-semibold text-crust-700">
-              הפרס (מה מקבל הלקוח?)
-            </label>
-            <input
-              id="set-reward"
-              type="text"
-              value={form.stampReward}
-              onChange={(e) => set("stampReward", e.target.value)}
-              placeholder="פיצה משפחתית חינם 🍕"
-              className="field-light"
-            />
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <label htmlFor="set-birthday" className="mb-1.5 block text-sm font-semibold text-crust-700">
-            הודעת יום הולדת · מציינים: <span dir="ltr">{`{name}`}</span>, <span dir="ltr">{`{business}`}</span>, <span dir="ltr">{`{reward}`}</span>
-          </label>
-          <textarea
-            id="set-birthday"
-            value={form.birthdayTemplate}
-            onChange={(e) => set("birthdayTemplate", e.target.value)}
-            rows={5}
-            className="field-light resize-y leading-relaxed"
-          />
-          <div className="mt-3 overflow-hidden rounded-2xl border border-crust-700/10 shadow-md">
-            <div className="bg-[#1F2C33] px-4 py-2.5 text-xs font-bold text-white/80">תצוגה חיה — כך תיראה הברכה (שם לדוגמה: דניאל)</div>
-            <div className="bg-[#0B141A] p-4">
-              <div className="wa-bubble-dark ml-6 w-fit max-w-full px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line">
-                {birthdayPreview}
                 <span className="mt-1 block text-left text-[10px] text-white/50">✓✓</span>
               </div>
             </div>

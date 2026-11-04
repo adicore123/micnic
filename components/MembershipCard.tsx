@@ -36,21 +36,6 @@ export default function MembershipCard({
         <div className="text-xs text-cream-200/60">חבר/ה מס׳ {pad(customer.cardNumber)}</div>
       </div>
 
-      {customer.points ? (
-        <div className="relative mt-3 rounded-xl bg-crust-950/60 px-3 py-2 ring-1 ring-white/5">
-          <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-cream-200/80">
-            <span>🍕 {customer.points}/{settings.stampGoal ?? 10} חותמות</span>
-            <span className="truncate">{settings.stampReward}</span>
-          </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-l from-cheese-400 to-cheese-500"
-              style={{ width: `${Math.min(100, Math.round(((customer.points ?? 0) / (settings.stampGoal ?? 10)) * 100))}%` }}
-            />
-          </div>
-        </div>
-      ) : null}
-
       <div className="relative mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-xl bg-crust-950/70 px-3 py-2 ring-1 ring-white/5">
         <Barcode value={`MC${pad(customer.cardNumber)}`} className="h-11 w-auto" />
         <span dir="ltr" className="shrink-0 pb-0.5 font-mono text-[11px] tracking-[0.2em] text-cream-200/50">

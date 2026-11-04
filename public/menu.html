@@ -675,21 +675,5 @@ async function initPizzaShowcase() {
 
 initPizzaShowcase();
 stage().catch(()=>{$('chef').style.visibility='visible'});
-</script>
-<script id="micnic-order-btn">(function(){
-  fetch("/api/settings").then(function(r){return r.json()}).then(function(s){
-    if(!s.businessPhone) return;
-    var a=document.createElement("a");
-    a.href="https://wa.me/972"+s.businessPhone.slice(1)+"?text="+encodeURIComponent("היי! רוצה להזמין 🍕");
-    a.target="_blank"; a.rel="noopener noreferrer";
-    a.style.cssText="position:fixed;bottom:18px;left:18px;z-index:99999;display:flex;align-items:center;gap:9px;background:linear-gradient(135deg,#58E07F,#1BA94C);color:#fff;padding:13px 22px;border-radius:999px;font:800 16px Arial,sans-serif;text-decoration:none;box-shadow:0 8px 24px rgba(18,140,126,.45)";
-    a.innerHTML='<svg width="22" height="22" viewBox="0 0 64 64" fill="none" style="flex-shrink:0"><circle cx="32" cy="32" r="31" fill="#fff"/><path d="M32 15c-9.4 0-17 7-17 15.7 0 3.1.93 6 2.54 8.43L15 49l10.3-2.4c2.05.94 4.33 1.4 6.7 1.4 9.4 0 17-7 17-15.7S41.4 15 32 15z" fill="#1BA94C"/></svg> אני רוצה להזמין 🍕';
-    a.setAttribute("micnic-order","1");
-    document.body.appendChild(a);
-    var st=document.createElement("style");
-    st.textContent="@media print{[micnic-order]{display:none!important}}";
-    document.head.appendChild(st);
-  }).catch(function(){});
-})();</script>
-</body></html>
+</script></body></html>
 

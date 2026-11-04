@@ -19,12 +19,7 @@ const settingsSchema = z.object({
   messageTemplate: z.string().trim().min(10, "ההודעה קצרה מדי").max(1200, "ההודעה ארוכה מדי"),
   inviteTemplate: z.string().trim().min(10, "הודעת ההזמנה קצרה מדי").max(600, "הודעת ההזמנה ארוכה מדי"),
   businessPhone: z.union([z.literal(""), phoneSchema]),
-  stampGoal: z.coerce.number().int().min(1, "יעד הנקודות חייב להיות לפחות 1").max(100),
-  stampReward: z.string().trim().min(2, "תיאור הפרס קצר מדי").max(60),
-  birthdayTemplate: z.string().trim().min(10, "הודעת יום ההולדת קצרה מדי").max(600),
-  adminPassword: z
-    .union([z.literal(""), z.string().min(4, "הסיסמה קצרה מדי (לפחות 4 תווים)").max(40)])
-    .optional(),
+  adminPassword: z.union([z.literal(""), z.string().min(4, "הסיסמה קצרה מדי (לפחות 4 תווים)").max(40)]),
 });
 
 export async function GET() {
