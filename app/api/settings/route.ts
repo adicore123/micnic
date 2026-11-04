@@ -19,11 +19,16 @@ const settingsSchema = z.object({
   messageTemplate: z.string().trim().min(10, "ההודעה קצרה מדי").max(1200, "ההודעה ארוכה מדי"),
   inviteTemplate: z.string().trim().min(10, "הודעת ההזמנה קצרה מדי").max(600, "הודעת ההזמנה ארוכה מדי"),
   businessPhone: z.union([z.literal(""), phoneSchema]),
-  adminPassword: z.union([z.literal(""), z.string().min(4, "הסיסמה קצרה מדי (לפחות 4 תווים)").max(40)]),
+  kitchenPin: z
+    .union([z.literal(""), z.string().regex(/^\d{4,6}$/, "קוד המטבח חייב להיות 4-6 ספרות")])
+    .optional(),
+  adminPassword: z.union([z.literal(""), z.string().min(4, "הסיסמה קצרה מדי (לפחות 4 תווים)").max(40)]).optional(),
 });
 
 export async function GET() {
-  const { adminPassword: _hidden, ...publicSettings } = await (await getStore()).getSettings();
+  const { adminPassword: _hidden, kitchenPin: _hiddenPin, ...publicSettings } = await (
+    await getStore()
+  ).getSettings();
   return Response.json(publicSettings);
 }
 
@@ -37,13 +42,15 @@ export async function PUT(request: Request) {
 
   const store = await getStore();
   const current = await store.getSettings();
-  const { adminPassword, ...rest } = parsed.data;
+  const { adminPassword, kitchenPin, ...rest } = parsed.data;
 
   await store.saveSettings({
     ...current,
     ...rest,
     // סיסמה ריקה = לשמור על הקיימת
     ...(adminPassword ? { adminPassword } : {}),
+    // קוד מטבח ריק = לשמור על הקיים
+    ...(kitchenPin !== undefined ? { kitchenPin } : {}),
   });
   return Response.json({ ok: true });
 }

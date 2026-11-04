@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import type QRCodeStyling from "qr-code-styling";
+import StyledQr from "./StyledQr";
 import { normalizePhone } from "@/lib/phone";
 import { renderInvite, renderMessage } from "@/lib/whatsapp";
 import type { PublicSettings } from "@/lib/db/types";
@@ -20,7 +22,7 @@ const INVITE_PLACEHOLDERS = [
 
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
 
-export default function SettingsForm({ initial }: { initial: PublicSettings }) {
+export default function SettingsForm({ initial, kitchenPin = "" }: { initial: PublicSettings; kitchenPin?: string }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +33,7 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
     messageTemplate: initial.messageTemplate,
     inviteTemplate: initial.inviteTemplate,
     businessPhone: initial.businessPhone ? initial.businessPhone.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1-$2-$3") : "",
+    kitchenPin,
     password: "",
     passwordConfirm: "",
   });
@@ -38,6 +41,12 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [origin, setOrigin] = useState<string | null>(null);
+  const [kitchenQr, setKitchenQr] = useState<QRCodeStyling | null>(null);
+  const [kitchenCopied, setKitchenCopied] = useState(false);
+
+  useEffect(() => setOrigin(window.location.origin), []);
+  const kitchenLink = origin ? `${origin}/kitchen` : "";
 
   const preview = useMemo(
     () =>
@@ -111,6 +120,10 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
       setError("הסיסמאות לא תואמות");
       return;
     }
+    if (form.kitchenPin.trim() && !/^\d{4,6}$/.test(form.kitchenPin.trim())) {
+      setError("קוד המטבח חייב להיות 4-6 ספרות");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -124,6 +137,7 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
         messageTemplate: form.messageTemplate,
         inviteTemplate: form.inviteTemplate,
         businessPhone: form.businessPhone ? normalizePhone(form.businessPhone)! : "",
+        kitchenPin: form.kitchenPin.trim(),
         adminPassword: form.password,
       }),
     }).catch(() => null);
@@ -309,6 +323,85 @@ export default function SettingsForm({ initial }: { initial: PublicSettings }) {
                 <span className="mt-1 block text-left text-[10px] text-white/50">✓✓</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* מטבח הטבחים — קוד וקישור */}
+      <section className="rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-extrabold text-crust-900">מטבח הטבחים 👨‍🍳</h2>
+        <p className="mb-5 mt-1 text-sm leading-relaxed text-crust-700/60">
+          קישור מיוחד לצוות המטבח: הטבחים נכנסים עם קוד קצר (פעם אחת — החיבור נשמר 30 יום) ורואים את הוראות
+          ההכנה <strong>בצפייה בלבד</strong>, בלי שום אפשרות עריכה. החלפת הקוד מנתקת את כולם מיד.
+        </p>
+
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <div>
+            <label htmlFor="set-kitchen-pin" className="mb-1.5 block text-sm font-semibold text-crust-700">
+              קוד מטבח (4-6 ספרות)
+            </label>
+            <input
+              id="set-kitchen-pin"
+              type="tel"
+              inputMode="numeric"
+              dir="ltr"
+              value={form.kitchenPin}
+              onChange={(e) => set("kitchenPin", e.target.value)}
+              placeholder="לדוגמה: 4821"
+              className="field-light text-right text-2xl tracking-[0.4em]"
+            />
+            <p className="mt-1.5 text-xs text-crust-700/50">ריק = הקישור לטבחים מושבת</p>
+
+            {kitchenLink && (
+              <div className="mt-4 rounded-xl bg-cream-100/70 p-4 ring-1 ring-crust-700/10">
+                <p className="text-sm font-bold text-crust-800">הקישור לשליחה לטבחים:</p>
+                <p dir="ltr" className="mt-1 truncate text-left text-xs text-crust-700/60">
+                  {kitchenLink}
+                </p>
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(kitchenLink).catch(() => null);
+                      setKitchenCopied(true);
+                      setTimeout(() => setKitchenCopied(false), 2500);
+                    }}
+                    className="rounded-xl border border-crust-700/15 bg-white px-4 py-2 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-50"
+                  >
+                    {kitchenCopied ? "הועתק ✓" : "🔗 העתקת הקישור"}
+                  </button>
+                  <a
+                    href="/kitchen"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl border border-crust-700/15 bg-white px-4 py-2 text-sm font-bold text-crust-800 shadow-sm transition hover:bg-cream-50"
+                  >
+                    👁️ תצוגה מהקישור
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="justify-self-center text-center">
+            <div className="w-fit rounded-2xl bg-cream-50 p-4 shadow-inner ring-1 ring-crust-700/10">
+              {kitchenLink ? (
+                <StyledQr data={kitchenLink} logo={form.logo} size={850} displaySize="min(190px, 60vw)" onReady={setKitchenQr} />
+              ) : (
+                <div className="h-[190px] w-[190px] animate-pulse rounded-xl bg-cream-200" />
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => kitchenQr?.download({ name: "micnic-kitchen-qr", extension: "png" })}
+              disabled={!kitchenQr}
+              className="mt-3 rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 disabled:opacity-50"
+            >
+              ⬇️ הורדת QR למטבח
+            </button>
+            <p className="mt-2 max-w-48 text-xs leading-relaxed text-crust-700/50">
+              מדפיסים, מדביקים במטבח — הטבחים סורקים ומקישים את הקוד פעם אחת
+            </p>
           </div>
         </div>
       </section>

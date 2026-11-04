@@ -21,5 +21,6 @@ export const DEFAULT_SETTINGS: Settings = {
     "{link}",
   ].join("\n"),
   businessPhone: "",
+  kitchenPin: "",
   adminPassword: "micnic2026",
 };

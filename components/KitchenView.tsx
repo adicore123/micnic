@@ -6,10 +6,12 @@ import type { KitchenDish } from "@/lib/kitchen";
 type Props = {
   dishes: KitchenDish[];
   initialRecipes: Record<string, string>;
+  /** readOnly = מצב טבחים — צפייה בלבד, בלי שום כפתור עריכה */
+  readOnly?: boolean;
 };
 
 /** מודול מטבח — הוראות הכנה לכל מנה, מותאם מובייל לטבחים */
-export default function KitchenView({ dishes, initialRecipes }: Props) {
+export default function KitchenView({ dishes, initialRecipes, readOnly = false }: Props) {
   const [recipes, setRecipes] = useState(initialRecipes);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string>("all");
@@ -38,10 +40,15 @@ export default function KitchenView({ dishes, initialRecipes }: Props) {
     });
   }, [dishes, cat, query, recipes]);
 
-  function open(d: KitchenDish) {
+  function open(d: KitchenDish, startInEdit = false) {
     setOpenDish(d);
-    setEditing(false);
     setSaveError(null);
+    if (readOnly || !startInEdit) {
+      setEditing(false);
+    } else {
+      setEditText(recipes[d.id] ?? "");
+      setEditing(true);
+    }
   }
 
   function startEdit() {
@@ -109,11 +116,11 @@ export default function KitchenView({ dishes, initialRecipes }: Props) {
       {filtered.length === 0 ? (
         <p className="p-10 text-center text-crust-700/50">לא נמצאו מנות מתאימות</p>
       ) : (
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((d) => {
             const hasRecipe = Boolean(recipes[d.id]?.trim());
             return (
-              <li key={d.id}>
+              <li key={d.id} className="relative">
                 <button
                   type="button"
                   onClick={() => open(d)}
@@ -138,6 +145,19 @@ export default function KitchenView({ dishes, initialRecipes }: Props) {
                     )}
                   </div>
                 </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => open(d, true)}
+                    title={`עריכת הוראות ${d.name}`}
+                    aria-label={`עריכת הוראות ${d.name}`}
+                    className="absolute left-3 top-3 rounded-xl bg-crust-900/5 p-2 text-crust-700/60 transition hover:bg-cheese-400/20 hover:text-cheese-600 active:scale-95"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4.5 w-4.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.9l3.6 3.6L8.4 19.2 4 20l.8-4.4L16.5 3.9z" />
+                    </svg>
+                  </button>
+                )}
               </li>
             );
           })}
@@ -214,13 +234,15 @@ export default function KitchenView({ dishes, initialRecipes }: Props) {
                   <p className="whitespace-pre-line text-xl font-medium leading-loose text-crust-900">
                     {recipes[openDish.id]?.trim() || "עדיין לא נכתבו הוראות הכנה למנה הזו"}
                   </p>
-                  <button
-                    type="button"
-                    onClick={startEdit}
-                    className="mt-5 w-full rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-6 py-3.5 text-lg font-extrabold text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.99]"
-                  >
-                    ✎ {recipes[openDish.id]?.trim() ? "עריכת ההוראות" : "כתיבת הוראות הכנה"}
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={startEdit}
+                      className="mt-5 w-full rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-6 py-3.5 text-lg font-extrabold text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.99]"
+                    >
+                      ✎ {recipes[openDish.id]?.trim() ? "עריכת ההוראות" : "כתיבת הוראות הכנה"}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

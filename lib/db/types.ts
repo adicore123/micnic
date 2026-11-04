@@ -22,11 +22,13 @@ export type Settings = {
   inviteTemplate: string;
   /** טלפון העסק לצ'אט הצטרפות עצמאית, בפורמט 05XXXXXXXX או ריק */
   businessPhone: string;
+  /** קוד כניסה למטבח הטבחים (4-6 ספרות) — ריק = מושבת */
+  kitchenPin: string;
   adminPassword: string;
 };
 
-/** הגדרות שמותר לחשוף ללקוח (בלי הסיסמה) */
-export type PublicSettings = Omit<Settings, "adminPassword">;
+/** הגדרות שמותר לחשוף ללקוח (בלי הסיסמה ובלי קוד המטבח) */
+export type PublicSettings = Omit<Settings, "adminPassword" | "kitchenPin">;
 
 export interface Store {
   listCustomers(): Promise<Customer[]>;
