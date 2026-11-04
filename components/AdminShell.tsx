@@ -22,6 +22,15 @@ const NAV: NavItem[] = [
     ),
   },
   {
+    href: "/admin/kitchen",
+    label: "מטבח",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}>
+        <path strokeLinecap="round" d="M4 3v6a3 3 0 002.5 2.95V21M7.5 3v6M9.5 3v6a3 3 0 01-2 2.83M15 3c-1.5 1.2-2.5 3-2.5 5.5V11h2.5v10M15 3v18" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/menu",
     label: "תפריט דיגיטלי",
     icon: (

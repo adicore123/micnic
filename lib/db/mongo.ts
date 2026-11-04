@@ -122,4 +122,15 @@ export const mongoStore: Store = {
     const { settings } = await collections();
     await settings.updateOne({ _id: SETTINGS_ID }, { $set: s }, { upsert: true });
   },
+
+  async getRecipes() {
+    const db = (await client()).db("micnic");
+    const doc = await db.collection<{ _id: string; recipes: Record<string, string> }>("recipes").findOne({ _id: "main" });
+    return doc?.recipes ?? {};
+  },
+
+  async saveRecipe(dishId, steps) {
+    const db = (await client()).db("micnic");
+    await db.collection("recipes").updateOne({ _id: "main" }, { $set: { [`recipes.${dishId}`]: steps } }, { upsert: true });
+  },
 };

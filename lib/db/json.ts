@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { DEFAULT_SETTINGS } from "../defaults";
 import type { Customer, NewCustomer, Settings, Store } from "./types";
 
-type DbFile = { customers: Customer[]; settings: Settings };
+type DbFile = { customers: Customer[]; settings: Settings; recipes?: Record<string, string> };
 
 const dataDir = path.join(process.cwd(), "data");
 const dbFile = path.join(dataDir, "db.json");
@@ -22,9 +22,10 @@ async function read(): Promise<DbFile> {
     return {
       customers: Array.isArray(parsed.customers) ? parsed.customers : [],
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+      recipes: parsed.recipes ?? {},
     };
   } catch {
-    return { customers: [], settings: { ...DEFAULT_SETTINGS } };
+    return { customers: [], settings: { ...DEFAULT_SETTINGS }, recipes: {} };
   }
 }
 
@@ -99,6 +100,16 @@ export const jsonStore: Store = {
   saveSettings(settings) {
     return update((db) => {
       db.settings = settings;
+    });
+  },
+
+  async getRecipes() {
+    return (await read()).recipes ?? {};
+  },
+
+  saveRecipe(dishId, steps) {
+    return update((db) => {
+      db.recipes = { ...(db.recipes ?? {}), [dishId]: steps };
     });
   },
 };

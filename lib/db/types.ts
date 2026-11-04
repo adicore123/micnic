@@ -37,4 +37,7 @@ export interface Store {
   updateCustomer(id: string, changes: NewCustomer): Promise<Customer | null>;
   getSettings(): Promise<Settings>;
   saveSettings(settings: Settings): Promise<void>;
+  /** הוראות הכנה לפי מזהה מנה */
+  getRecipes(): Promise<Record<string, string>>;
+  saveRecipe(dishId: string, steps: string): Promise<void>;
 }
