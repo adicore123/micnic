@@ -17,7 +17,7 @@ export type KitchenDish = {
 export async function getKitchenDishes(): Promise<KitchenDish[]> {
   const html = await fs.readFile(path.join(process.cwd(), "public", "menu-editor.html"), "utf8");
 
-  const seedMatch = html.match(/id="seed">(\{.*?\})<\/script>/s);
+  const seedMatch = html.match(/id="seed">(\{[\s\S]*?\})<\/script>/);
   if (!seedMatch) return [];
 
   let items: Array<{ id: string; cat: string; name: string; price: number; desc?: string }> = [];
@@ -29,7 +29,7 @@ export async function getKitchenDishes(): Promise<KitchenDish[]> {
 
   // תוויות הקטגוריות בעברית מתוך קוד העמוד: const categories=[['starters','ראשונות',...],...]
   const labels = new Map<string, string>();
-  const catsMatch = html.match(/const categories=\[(.*?)\];/s);
+  const catsMatch = html.match(/const categories=\[([\s\S]*?)\];/);
   if (catsMatch) {
     for (const [, key, label] of catsMatch[1].matchAll(/\[\s*'([^']+)'\s*,\s*'([^']+)'/g)) {
       labels.set(key, label);

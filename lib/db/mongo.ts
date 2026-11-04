@@ -6,6 +6,9 @@ import { DEFAULT_SETTINGS } from "../defaults";
 import type { Customer, NewCustomer, Settings, Store } from "./types";
 
 type SettingsDoc = Settings & { _id: string };
+type RecipesDoc = { _id: string; recipes: Record<string, string> };
+
+const RECIPES_ID = "main";
 
 const globalForMongo = globalThis as typeof globalThis & {
   __micnicMongo?: Promise<MongoClient>;
@@ -125,12 +128,14 @@ export const mongoStore: Store = {
 
   async getRecipes() {
     const db = (await client()).db("micnic");
-    const doc = await db.collection<{ _id: string; recipes: Record<string, string> }>("recipes").findOne({ _id: "main" });
+    const doc = await db.collection<RecipesDoc>("recipes").findOne({ _id: RECIPES_ID });
     return doc?.recipes ?? {};
   },
 
   async saveRecipe(dishId, steps) {
     const db = (await client()).db("micnic");
-    await db.collection("recipes").updateOne({ _id: "main" }, { $set: { [`recipes.${dishId}`]: steps } }, { upsert: true });
+    await db
+      .collection<RecipesDoc>("recipes")
+      .updateOne({ _id: RECIPES_ID }, { $set: { [`recipes.${dishId}`]: steps } }, { upsert: true });
   },
 };
