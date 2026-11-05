@@ -5,7 +5,7 @@ import JoinForm, { type JoinResult } from "./JoinForm";
 import SuccessView from "./SuccessView";
 import WhatsAppButton from "./WhatsAppButton";
 import { menuMessage, menuUrl, renderInvite, renderMessage, waLink } from "@/lib/whatsapp";
-import { displayPhone, joinSchema, normalizePhone, PHONE_HINT } from "@/lib/phone";
+import { displayPhone, joinSchema } from "@/lib/phone";
 import type { Customer, PublicSettings } from "@/lib/db/types";
 
 const pad = (n: number) => String(n).padStart(4, "0");
@@ -29,6 +29,17 @@ export default function AdminDashboard({
   const [absentError, setAbsentError] = useState<string | null>(null);
   const [absentSent, setAbsentSent] = useState<string | null>(null);
 
+  // מסכים — הכול נפתח מכפתורים ייעודים
+  const [showTable, setShowTable] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+
+  // עריכת לקוח
+  const [editing, setEditing] = useState<Customer | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editPending, setEditPending] = useState(false);
+
   useEffect(() => setOrigin(window.location.origin), []);
 
   const menuLink = useMemo(() => (origin ? menuUrl(origin) : ""), [origin]);
@@ -37,23 +48,6 @@ export default function AdminDashboard({
     () => (joinLink ? waLink(absentPhone.trim(), renderInvite(settings.inviteTemplate, settings, joinLink)) : "#"),
     [absentPhone, settings, joinLink],
   );
-
-  function sendAbsentInvite(e: React.MouseEvent) {
-    if (!normalizePhone(absentPhone)) {
-      e.preventDefault();
-      setAbsentError("מספר הטלפון לא נראה תקין. לדוגמה: 050-1234567");
-      return;
-    }
-    setAbsentError(null);
-    setAbsentSent("הקישור נפתח בוואטסאפ — אחרי השליחה הלקוח יצטרף בעצמו עם אישורו");
-  }
-
-  // עריכת לקוח
-  const [editing, setEditing] = useState<Customer | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [editError, setEditError] = useState<string | null>(null);
-  const [editPending, setEditPending] = useState(false);
 
   const stats = useMemo(
     () => ({
@@ -74,6 +68,10 @@ export default function AdminDashboard({
         (digits && (c.phone.includes(digits) || pad(c.cardNumber).includes(digits))),
     );
   }, [customers, query]);
+
+  function updateCustomers(customer: Customer) {
+    setCustomers((prev) => prev.map((c) => (c.id === customer.id ? customer : c)));
+  }
 
   function handleDone(r: JoinResult) {
     setResult(r);
@@ -118,7 +116,7 @@ export default function AdminDashboard({
 
     if (res?.ok) {
       const { customer } = (await res.json()) as { customer: Customer };
-      setCustomers((prev) => prev.map((c) => (c.id === customer.id ? customer : c)));
+      updateCustomers(customer);
       setEditing(null);
     } else {
       const data = res ? await res.json().catch(() => null) : null;
@@ -126,225 +124,289 @@ export default function AdminDashboard({
     }
   }
 
-  const actionBtn =
-    "rounded-lg p-1.5 transition";
+  function sendAbsentInvite(e: React.MouseEvent) {
+    if (!/^\d{9,10}$/.test(absentPhone.replace(/\D/g, ""))) {
+      e.preventDefault();
+      setAbsentError("מספר הטלפון לא נראה תקין. לדוגמה: 050-1234567");
+      return;
+    }
+    setAbsentError(null);
+    setAbsentSent("הקישור נפתח בוואטסאפ — אחרי השליחה הלקוח יצטרף בעצמו עם אישורו");
+  }
+
+  const actionBtn = "rounded-lg p-1.5 transition";
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[400px_1fr]">
-      {/* הוספת לקוח — עם אישור הסכמה */}
-      <section className="h-fit min-w-0 rounded-2xl border border-crust-700/10 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-extrabold text-crust-900">הוספת לקוח למועדון</h2>
+    <div>
+      {/* ═══ בית המודול — נקי, הכול דרך כפתורים ייעודים ═══ */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        {[
+          { icon: "👥", value: stats.total, label: "חברים במועדון" },
+          { icon: "🎉", value: stats.thisWeek, label: "הצטרפו השבוע" },
+          { icon: "💰", value: `${settings.discountPercent}%`, label: "הנחת חבר" },
+        ].map((s) => (
+          <div key={s.label} className="rounded-2xl border border-crust-700/10 bg-white px-3 py-4 text-center shadow-sm sm:px-4">
+            <div className="text-2xl">{s.icon}</div>
+            <div className="mt-1 text-xl font-extrabold text-crust-900 sm:text-2xl">{s.value}</div>
+            <div className="text-[11px] font-medium text-crust-700/60 sm:text-xs">{s.label}</div>
+          </div>
+        ))}
+      </div>
 
-        {/* החלפת מצב */}
-        <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl bg-cream-100 p-1.5">
-          <button
-            type="button"
-            onClick={() => setAddMode("present")}
-            className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${
-              addMode === "present" ? "bg-white text-crust-900 shadow-sm" : "text-crust-700/60 hover:text-crust-900"
-            }`}
-          >
-            🙋 הלקוח לפניי
-          </button>
-          <button
-            type="button"
-            onClick={() => setAddMode("absent")}
-            className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${
-              addMode === "absent" ? "bg-white text-crust-900 shadow-sm" : "text-crust-700/60 hover:text-crust-900"
-            }`}
-          >
-            📲 הלקוח לא נמצא
-          </button>
-        </div>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => {
+            setResult(null);
+            setShowAdd(true);
+          }}
+          className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-tomato-400 to-tomato-600 p-6 text-start text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.99]"
+        >
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl">➕</span>
+          <span>
+            <span className="block text-xl font-extrabold">הוספת לקוח למועדון</span>
+            <span className="mt-0.5 block text-sm text-white/85">הלקוח לפניי · או שליחת קישור בוואטסאפ</span>
+          </span>
+        </button>
 
-        {addMode === "present" ? (
-          <>
-            <p className="mb-5 mt-4 text-sm leading-relaxed text-crust-700/60">
-              הלקוח נמצא במקום: ממלאים את פרטיו, מאשרים את הסכמתו בעל פה — ושולחים את הודעת התודה וההנחה
-              בוואטסאפ בלחיצה אחת
-            </p>
-            {result ? (
-              <div className="rounded-2xl bg-crust-900 p-5">
-                <SuccessView result={result} settings={settings} mode="staff" onReset={() => setResult(null)} />
-              </div>
+        <button
+          type="button"
+          onClick={() => setShowTable(true)}
+          className="flex items-center gap-4 rounded-2xl border border-crust-700/10 bg-white p-6 text-start shadow-sm transition hover:shadow-md active:scale-[0.99]"
+        >
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cream-100 text-3xl">📋</span>
+          <span>
+            <span className="flex items-center gap-2 text-xl font-extrabold text-crust-900">
+              טבלת הלקוחות
+              <span className="rounded-full bg-tomato-500/10 px-2.5 py-0.5 text-sm font-extrabold text-tomato-600">
+                {stats.total}
+              </span>
+            </span>
+            <span className="mt-0.5 block text-sm text-crust-700/60">חיפוש, זיהוי בקופה, הודעות והדפסה</span>
+          </span>
+        </button>
+      </div>
+
+      {/* ═══ מודל הוספת לקוח ═══ */}
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+          <div className="anim-fade absolute inset-0 bg-black/50" onClick={() => setShowAdd(false)} aria-hidden="true" />
+          <div className="anim-pop relative my-8 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-extrabold text-crust-900">הוספת לקוח למועדון</h2>
+              <button
+                type="button"
+                onClick={() => setShowAdd(false)}
+                aria-label="סגירה"
+                className="rounded-lg p-2 text-crust-700/50 transition hover:bg-cream-100"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                  <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-cream-100 p-1.5">
+              <button
+                type="button"
+                onClick={() => setAddMode("present")}
+                className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${
+                  addMode === "present" ? "bg-white text-crust-900 shadow-sm" : "text-crust-700/60 hover:text-crust-900"
+                }`}
+              >
+                🙋 הלקוח לפניי
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddMode("absent")}
+                className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${
+                  addMode === "absent" ? "bg-white text-crust-900 shadow-sm" : "text-crust-700/60 hover:text-crust-900"
+                }`}
+              >
+                📲 הלקוח לא נמצא
+              </button>
+            </div>
+
+            {addMode === "present" ? (
+              <>
+                <p className="mb-5 mt-4 text-sm leading-relaxed text-crust-700/60">
+                  ממלאים את פרטיו, מאשרים את הסכמתו בעל פה — ושולחים את הודעת התודה וההנחה בוואטסאפ בלחיצה אחת
+                </p>
+                {result ? (
+                  <div className="rounded-2xl bg-crust-900 p-5">
+                    <SuccessView result={result} settings={settings} mode="staff" onReset={() => setResult(null)} />
+                  </div>
+                ) : (
+                  <JoinForm dark={false} adminMode onDone={handleDone} submitLabel="הוספה למועדון 🍕" />
+                )}
+              </>
             ) : (
-              <JoinForm dark={false} adminMode onDone={handleDone} submitLabel="הוספה למועדון 🍕" />
-            )}
-          </>
-        ) : (
-          <div className="mt-4">
-            <p className="mb-4 text-sm leading-relaxed text-crust-700/60">
-              הלקוח לא נמצא כאן? לא מוסיפים אותו ישירות — שולחים לו קישור הצטרפות בוואטסאפ, והוא ימלא את
-              שמו ו<strong>יאשר את הצטרפותו בעצמו</strong>. הלקוח יתווסף לרשימה אוטומטית לאחר האישור.
-            </p>
+              <div className="mt-4">
+                <p className="mb-4 text-sm leading-relaxed text-crust-700/60">
+                  שולחים ללקוח קישור הצטרפות בוואטסאפ, והוא ימלא את שמו ו<strong>יאשר את הצטרפותו בעצמו</strong> — ויתווסף
+                  לרשימה אוטומטית.
+                </p>
 
-            <label htmlFor="absent-phone" className="mb-1.5 block text-sm font-semibold text-crust-700">
-              טלפון הלקוח
-            </label>
-            <input
-              id="absent-phone"
-              type="tel"
-              dir="ltr"
-              inputMode="tel"
-              value={absentPhone}
-              onChange={(e) => {
-                setAbsentPhone(e.target.value);
-                setAbsentSent(null);
-              }}
-              placeholder="050-1234567"
-              className="field-light mb-2 text-right text-lg"
-            />
-            {absentError && <p className="mb-3 text-sm font-semibold text-tomato-600">{absentError}</p>}
-            <p className="mb-3 text-xs text-crust-700/50">{PHONE_HINT}</p>
+                <label htmlFor="absent-phone" className="mb-1.5 block text-sm font-semibold text-crust-700">
+                  טלפון הלקוח
+                </label>
+                <input
+                  id="absent-phone"
+                  type="tel"
+                  dir="ltr"
+                  inputMode="tel"
+                  value={absentPhone}
+                  onChange={(e) => {
+                    setAbsentPhone(e.target.value);
+                    setAbsentSent(null);
+                  }}
+                  placeholder="050-1234567"
+                  className="field-light mb-2 text-right text-lg"
+                />
+                {absentError && <p className="mb-3 text-sm font-semibold text-tomato-600">{absentError}</p>}
 
-            <WhatsAppButton
-              className="w-full justify-center"
-              href={inviteLink}
-              onClick={sendAbsentInvite}
-              label="שליחת קישור הצטרפות"
-              sub="הלקוח יאשר את הצטרפותו בעצמו"
-            />
+                <WhatsAppButton
+                  className="w-full justify-center"
+                  href={inviteLink}
+                  onClick={sendAbsentInvite}
+                  label="שליחת קישור הצטרפות"
+                  sub="הלקוח יאשר את הצטרפותו בעצמו"
+                />
 
-            {absentSent && (
-              <p className="mt-4 rounded-xl bg-basil-500/10 px-4 py-3 text-sm font-semibold text-basil-600">
-                ✓ {absentSent}
-              </p>
+                {absentSent && (
+                  <p className="mt-4 rounded-xl bg-basil-500/10 px-4 py-3 text-sm font-semibold text-basil-600">
+                    ✓ {absentSent}
+                  </p>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </section>
-
-      {/* רשימת לקוחות */}
-      <section className="min-w-0">
-        <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
-          {[
-            { icon: "👥", value: stats.total, label: "חברים במועדון" },
-            { icon: "🎉", value: stats.thisWeek, label: "הצטרפו השבוע" },
-            { icon: "💰", value: `${settings.discountPercent}%`, label: "הנחת חבר" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-crust-700/10 bg-white px-3 py-4 text-center shadow-sm sm:px-4">
-              <div className="text-2xl">{s.icon}</div>
-              <div className="mt-1 text-xl font-extrabold text-crust-900 sm:text-2xl">{s.value}</div>
-              <div className="text-[11px] font-medium text-crust-700/60 sm:text-xs">{s.label}</div>
-            </div>
-          ))}
         </div>
+      )}
 
-        <div className="rounded-2xl border border-crust-700/10 bg-white shadow-sm">
-          <div className="border-b border-crust-700/10 p-4">
+      {/* ═══ טבלת הלקוחות — מסך מלא דרך כפתור ייעודי ═══ */}
+      {showTable && (
+        <div className="fixed inset-0 z-40 flex flex-col bg-cream-50">
+          <div className="flex items-center gap-3 border-b border-crust-700/10 bg-white px-4 py-3 shadow-sm">
+            <h2 className="text-lg font-extrabold text-crust-900">טבלת הלקוחות</h2>
+            <span className="rounded-full bg-tomato-500/10 px-2.5 py-0.5 text-sm font-extrabold text-tomato-600">
+              {customers.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowTable(false)}
+              aria-label="סגירה"
+              className="ms-auto rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-4 py-2 text-sm font-extrabold text-white shadow-md shadow-tomato-600/25 transition hover:brightness-110"
+            >
+              סגירה ✕
+            </button>
+          </div>
+
+          <div className="border-b border-crust-700/10 bg-white px-4 py-3">
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="🔍 חיפוש לקוח — שם, טלפון או מספר חבר (עובד גם עם קורא ברקוד)"
               className="field-light"
+              autoFocus
             />
           </div>
 
-          {filtered.length === 0 ? (
-            <p className="p-10 text-center text-sm text-crust-700/50">
-              {customers.length === 0 ? "עדיין אין חברים במועדון — הוסיפו את הראשון 🍕" : "לא נמצאו לקוחות שמתאימים לחיפוש"}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm [&_td]:whitespace-nowrap">
-                <thead>
-                  <tr className="text-xs text-crust-700/50 [&>th]:px-4 [&>th]:py-3 [&>th]:text-start [&>th]:font-semibold">
-                    <th>מס׳ חבר</th>
-                    <th>שם</th>
-                    <th>טלפון</th>
-                    <th>הצטרף בתאריך</th>
-                    <th className="text-center">פעולות</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-crust-700/5">
-                  {filtered.map((c) => (
-                    <tr key={c.id} className="transition hover:bg-cream-100/50">
-                      <td className="px-4 py-3 font-mono text-xs text-crust-700/70" dir="ltr">
-                        #{pad(c.cardNumber)}
-                      </td>
-                      <td className="max-w-40 truncate px-4 py-3 font-bold text-crust-900">
-                        {c.name}
-                        {c.consentAt && (
-                          <span
-                            title={`אישר הצטרפות בתאריך ${dateFmt.format(new Date(c.consentAt))}`}
-                            className="ms-1.5 inline-block align-middle text-basil-600"
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="inline h-4 w-4">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-crust-700" dir="ltr">
-                        {displayPhone(c.phone)}
-                      </td>
-                      <td className="px-4 py-3 text-crust-700/70">{dateFmt.format(new Date(c.createdAt))}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center justify-center gap-1">
-                          <WhatsAppButton
-                            size="sm"
-                            href={waLink(c.phone, renderMessage(settings.messageTemplate, c.name, settings))}
-                            label={`שליחת הודעה ל${c.name}`}
-                          />
-                          <a
-                            href={menuLink ? waLink(c.phone, menuMessage(settings.businessName, menuLink, c.name)) : "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`שליחת התפריט ל${c.name}`}
-                            aria-label={`שליחת התפריט ל${c.name}`}
-                            className={`${actionBtn} inline-flex text-crust-700/50 transition hover:bg-cheese-400/15 hover:text-cheese-500`}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2.5 2.5 0 01-5 0V3M4.5 10v11M20 3c-2 1-3 3.2-3 6v5h3v7M20 3v11" />
-                            </svg>
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => startEdit(c)}
-                            title={`עריכת ${c.name}`}
-                            aria-label={`עריכת ${c.name}`}
-                            className={`${actionBtn} text-crust-700/50 hover:bg-cheese-400/15 hover:text-cheese-500`}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.9l3.6 3.6L8.4 19.2 4 20l.8-4.4L16.5 3.9z" />
-                            </svg>
-                          </button>
-                          <a
-                            href={`/admin/card/${c.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`הדפסת כרטיס ${c.name}`}
-                            aria-label={`הדפסת כרטיס ${c.name}`}
-                            className={`${actionBtn} inline-flex text-crust-700/50 hover:bg-basil-500/10 hover:text-basil-600`}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2m-10-2h10v6H7v-6z" />
-                            </svg>
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => remove(c)}
-                            title={`מחיקת ${c.name}`}
-                            aria-label={`מחיקת ${c.name}`}
-                            className={`${actionBtn} text-crust-700/40 hover:bg-tomato-500/10 hover:text-tomato-600`}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                              <path strokeLinecap="round" d="M5 7h14M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2m3 0v12a1 1 0 01-1 1H8a1 1 0 01-1-1V7m4 4v6m4-6v6" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            {filtered.length === 0 ? (
+              <p className="p-10 text-center text-sm text-crust-700/50">
+                {customers.length === 0 ? "עדיין אין חברים במועדון — הוסיפו את הראשון 🍕" : "לא נמצאו לקוחות שמתאימים לחיפוש"}
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-crust-700/10 bg-white shadow-sm">
+                <table className="w-full min-w-[640px] text-sm [&_td]:whitespace-nowrap">
+                  <thead>
+                    <tr className="text-xs text-crust-700/50 [&>th]:px-4 [&>th]:py-3 [&>th]:text-start [&>th]:font-semibold">
+                      <th>מס׳ חבר</th>
+                      <th>שם</th>
+                      <th>טלפון</th>
+                      <th>הצטרף בתאריך</th>
+                      <th className="text-center">פעולות</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-crust-700/5">
+                    {filtered.map((c) => (
+                      <tr key={c.id} className="transition hover:bg-cream-100/50">
+                        <td className="px-4 py-3 font-mono text-xs text-crust-700/70" dir="ltr">
+                          #{pad(c.cardNumber)}
+                        </td>
+                        <td className="max-w-40 truncate px-4 py-3 font-bold text-crust-900">{c.name}</td>
+                        <td className="px-4 py-3 text-crust-700" dir="ltr">
+                          {displayPhone(c.phone)}
+                        </td>
+                        <td className="px-4 py-3 text-crust-700/70">{dateFmt.format(new Date(c.createdAt))}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <WhatsAppButton
+                              size="sm"
+                              href={waLink(c.phone, renderMessage(settings.messageTemplate, c.name, settings))}
+                              label={`שליחת הודעה ל${c.name}`}
+                            />
+                            <a
+                              href={menuLink ? waLink(c.phone, menuMessage(settings.businessName, menuLink, c.name)) : "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`שליחת התפריט ל${c.name}`}
+                              aria-label={`שליחת התפריט ל${c.name}`}
+                              className={`${actionBtn} inline-flex text-crust-700/50 transition hover:bg-cheese-400/15 hover:text-cheese-500`}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2.5 2.5 0 01-5 0V3M4.5 10v11M20 3c-2 1-3 3.2-3 6v5h3v7M20 3v11" />
+                              </svg>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(c)}
+                              title={`עריכת ${c.name}`}
+                              aria-label={`עריכת ${c.name}`}
+                              className={`${actionBtn} text-crust-700/50 hover:bg-cheese-400/15 hover:text-cheese-500`}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.9l3.6 3.6L8.4 19.2 4 20l.8-4.4L16.5 3.9z" />
+                              </svg>
+                            </button>
+                            <a
+                              href={`/admin/card/${c.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`הדפסת כרטיס ${c.name}`}
+                              aria-label={`הדפסת כרטיס ${c.name}`}
+                              className={`${actionBtn} inline-flex text-crust-700/50 hover:bg-basil-500/10 hover:text-basil-600`}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2m-10-2h10v6H7v-6z" />
+                              </svg>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => remove(c)}
+                              title={`מחיקת ${c.name}`}
+                              aria-label={`מחיקת ${c.name}`}
+                              className={`${actionBtn} text-crust-700/40 hover:bg-tomato-500/10 hover:text-tomato-600`}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                                <path strokeLinecap="round" d="M5 7h14M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2m3 0v12a1 1 0 01-1 1H8a1 1 0 01-1-1V7m4 4v6m4-6v6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      </section>
+      )}
 
-      {/* חלונית עריכת לקוח */}
+      {/* עריכת לקוח */}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="anim-fade absolute inset-0 bg-black/50" onClick={() => setEditing(null)} aria-hidden="true" />
@@ -355,13 +417,7 @@ export default function AdminDashboard({
             <label htmlFor="edit-name" className="mb-1.5 block text-sm font-semibold text-crust-700">
               שם מלא
             </label>
-            <input
-              id="edit-name"
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="field-light mb-4"
-            />
+            <input id="edit-name" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="field-light mb-4" />
 
             <label htmlFor="edit-phone" className="mb-1.5 block text-sm font-semibold text-crust-700">
               טלפון נייד
