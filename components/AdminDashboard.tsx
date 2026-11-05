@@ -29,8 +29,7 @@ export default function AdminDashboard({
   const [absentError, setAbsentError] = useState<string | null>(null);
   const [absentSent, setAbsentSent] = useState<string | null>(null);
 
-  // מסכים — הכול נפתח מכפתורים ייעודים
-  const [showTable, setShowTable] = useState(false);
+  // מסכים — הוספה דרך כפתור; הטבלה מוצגת תמיד
   const [showAdd, setShowAdd] = useState(false);
 
   // עריכת לקוח
@@ -136,9 +135,65 @@ export default function AdminDashboard({
 
   const actionBtn = "rounded-lg p-1.5 transition";
 
+  const rowActions = (c: Customer) => (
+    <div className="flex items-center justify-center gap-1">
+      <WhatsAppButton
+        size="sm"
+        href={waLink(c.phone, renderMessage(settings.messageTemplate, c.name, settings))}
+        label={`שליחת הודעה ל${c.name}`}
+      />
+      <a
+        href={menuLink ? waLink(c.phone, menuMessage(settings.businessName, menuLink, c.name)) : "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`שליחת התפריט ל${c.name}`}
+        aria-label={`שליחת התפריט ל${c.name}`}
+        className={`${actionBtn} inline-flex text-crust-700/50 transition hover:bg-cheese-400/15 hover:text-cheese-500`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2.5 2.5 0 01-5 0V3M4.5 10v11M20 3c-2 1-3 3.2-3 6v5h3v7M20 3v11" />
+        </svg>
+      </a>
+      <button
+        type="button"
+        onClick={() => startEdit(c)}
+        title={`עריכת ${c.name}`}
+        aria-label={`עריכת ${c.name}`}
+        className={`${actionBtn} text-crust-700/50 hover:bg-cheese-400/15 hover:text-cheese-500`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.9l3.6 3.6L8.4 19.2 4 20l.8-4.4L16.5 3.9z" />
+        </svg>
+      </button>
+      <a
+        href={`/admin/card/${c.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`הדפסת כרטיס ${c.name}`}
+        aria-label={`הדפסת כרטיס ${c.name}`}
+        className={`${actionBtn} inline-flex text-crust-700/50 hover:bg-basil-500/10 hover:text-basil-600`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2m-10-2h10v6H7v-6z" />
+        </svg>
+      </a>
+      <button
+        type="button"
+        onClick={() => remove(c)}
+        title={`מחיקת ${c.name}`}
+        aria-label={`מחיקת ${c.name}`}
+        className={`${actionBtn} text-crust-700/40 hover:bg-tomato-500/10 hover:text-tomato-600`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+          <path strokeLinecap="round" d="M5 7h14M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2m3 0v12a1 1 0 01-1 1H8a1 1 0 01-1-1V7m4 4v6m4-6v6" />
+        </svg>
+      </button>
+    </div>
+  );
+
   return (
     <div>
-      {/* ═══ בית המודול — נקי, הכול דרך כפתורים ייעודים ═══ */}
+      {/* ═══ סטטיסטיקות ═══ */}
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
           { icon: "👥", value: stats.total, label: "חברים במועדון" },
@@ -153,39 +208,91 @@ export default function AdminDashboard({
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      {/* ═══ חיפוש + הוספה ═══ */}
+      <div className="mt-6 flex gap-2.5">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="🔍 חיפוש לקוח — שם, טלפון או מספר חבר (גם קורא ברקוד)"
+          className="field-light min-w-0 flex-1 !py-3 !text-base"
+        />
         <button
           type="button"
           onClick={() => {
             setResult(null);
             setShowAdd(true);
           }}
-          className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-tomato-400 to-tomato-600 p-6 text-start text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.99]"
+          title="הוספת לקוח למועדון"
+          aria-label="הוספת לקוח למועדון"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-4 text-base font-extrabold text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.98] sm:px-5"
         >
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl">➕</span>
-          <span>
-            <span className="block text-xl font-extrabold">הוספת לקוח למועדון</span>
-            <span className="mt-0.5 block text-sm text-white/85">הלקוח לפניי · או שליחת קישור בוואטסאפ</span>
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowTable(true)}
-          className="flex items-center gap-4 rounded-2xl border border-crust-700/10 bg-white p-6 text-start shadow-sm transition hover:shadow-md active:scale-[0.99]"
-        >
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cream-100 text-3xl">📋</span>
-          <span>
-            <span className="flex items-center gap-2 text-xl font-extrabold text-crust-900">
-              טבלת הלקוחות
-              <span className="rounded-full bg-tomato-500/10 px-2.5 py-0.5 text-sm font-extrabold text-tomato-600">
-                {stats.total}
-              </span>
-            </span>
-            <span className="mt-0.5 block text-sm text-crust-700/60">חיפוש, זיהוי בקופה, הודעות והדפסה</span>
-          </span>
+          <span className="text-xl leading-none">➕</span>
+          <span className="hidden sm:inline">הוספת לקוח</span>
         </button>
       </div>
+
+      {/* ═══ טבלת הלקוחות — דסקטופ ═══ */}
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-crust-700/10 bg-white shadow-sm lg:block">
+        {filtered.length === 0 ? (
+          <p className="p-10 text-center text-sm text-crust-700/50">
+            {customers.length === 0 ? "עדיין אין חברים במועדון — הוסיפו את הראשון 🍕" : "לא נמצאו לקוחות שמתאימים לחיפוש"}
+          </p>
+        ) : (
+          <table className="w-full text-sm [&_td]:whitespace-nowrap">
+            <thead>
+              <tr className="border-b border-crust-700/10 text-xs text-crust-700/50 [&>th]:px-4 [&>th]:py-3.5 [&>th]:text-start [&>th]:font-semibold">
+                <th>מס׳ חבר</th>
+                <th>שם</th>
+                <th>טלפון</th>
+                <th>הצטרף בתאריך</th>
+                <th className="text-center">פעולות</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-crust-700/5">
+              {filtered.map((c) => (
+                <tr key={c.id} className="transition hover:bg-cream-100/50">
+                  <td className="px-4 py-3.5 font-mono text-xs text-crust-700/70" dir="ltr">
+                    #{pad(c.cardNumber)}
+                  </td>
+                  <td className="max-w-52 truncate px-4 py-3.5 font-bold text-crust-900">{c.name}</td>
+                  <td className="px-4 py-3.5 text-crust-700" dir="ltr">
+                    {displayPhone(c.phone)}
+                  </td>
+                  <td className="px-4 py-3.5 text-crust-700/70">{dateFmt.format(new Date(c.createdAt))}</td>
+                  <td className="px-3 py-3">{rowActions(c)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* ═══ כרטיסי לקוח — מובייל ═══ */}
+      <ul className="mt-4 space-y-2.5 lg:hidden">
+        {filtered.length === 0 ? (
+          <li className="rounded-2xl border border-crust-700/10 bg-white p-8 text-center text-sm text-crust-700/50 shadow-sm">
+            {customers.length === 0 ? "עדיין אין חברים במועדון — הוסיפו את הראשון 🍕" : "לא נמצאו לקוחות שמתאימים לחיפוש"}
+          </li>
+        ) : (
+          filtered.map((c) => (
+            <li key={c.id} className="rounded-2xl border border-crust-700/10 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="shrink-0 rounded-full bg-cream-100 px-2.5 py-1 font-mono text-xs font-bold text-crust-700" dir="ltr">
+                  #{pad(c.cardNumber)}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-lg font-extrabold text-crust-900">{c.name}</span>
+              </div>
+              <div className="mt-1.5 flex items-center gap-2 text-sm text-crust-700/70">
+                <span dir="ltr">{displayPhone(c.phone)}</span>
+                <span aria-hidden="true">·</span>
+                <span>{dateFmt.format(new Date(c.createdAt))}</span>
+              </div>
+              <div className="mt-3 border-t border-crust-700/5 pt-2.5">{rowActions(c)}</div>
+            </li>
+          ))
+        )}
+      </ul>
 
       {/* ═══ מודל הוספת לקוח ═══ */}
       {showAdd && (
@@ -278,128 +385,6 @@ export default function AdminDashboard({
                     ✓ {absentSent}
                   </p>
                 )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ טבלת הלקוחות — מסך מלא דרך כפתור ייעודי ═══ */}
-      {showTable && (
-        <div className="fixed inset-0 z-40 flex flex-col bg-cream-50">
-          <div className="flex items-center gap-3 border-b border-crust-700/10 bg-white px-4 py-3 shadow-sm">
-            <h2 className="text-lg font-extrabold text-crust-900">טבלת הלקוחות</h2>
-            <span className="rounded-full bg-tomato-500/10 px-2.5 py-0.5 text-sm font-extrabold text-tomato-600">
-              {customers.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowTable(false)}
-              aria-label="סגירה"
-              className="ms-auto rounded-xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-4 py-2 text-sm font-extrabold text-white shadow-md shadow-tomato-600/25 transition hover:brightness-110"
-            >
-              סגירה ✕
-            </button>
-          </div>
-
-          <div className="border-b border-crust-700/10 bg-white px-4 py-3">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="🔍 חיפוש לקוח — שם, טלפון או מספר חבר (עובד גם עם קורא ברקוד)"
-              className="field-light"
-              autoFocus
-            />
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            {filtered.length === 0 ? (
-              <p className="p-10 text-center text-sm text-crust-700/50">
-                {customers.length === 0 ? "עדיין אין חברים במועדון — הוסיפו את הראשון 🍕" : "לא נמצאו לקוחות שמתאימים לחיפוש"}
-              </p>
-            ) : (
-              <div className="overflow-x-auto rounded-2xl border border-crust-700/10 bg-white shadow-sm">
-                <table className="w-full min-w-[640px] text-sm [&_td]:whitespace-nowrap">
-                  <thead>
-                    <tr className="text-xs text-crust-700/50 [&>th]:px-4 [&>th]:py-3 [&>th]:text-start [&>th]:font-semibold">
-                      <th>מס׳ חבר</th>
-                      <th>שם</th>
-                      <th>טלפון</th>
-                      <th>הצטרף בתאריך</th>
-                      <th className="text-center">פעולות</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-crust-700/5">
-                    {filtered.map((c) => (
-                      <tr key={c.id} className="transition hover:bg-cream-100/50">
-                        <td className="px-4 py-3 font-mono text-xs text-crust-700/70" dir="ltr">
-                          #{pad(c.cardNumber)}
-                        </td>
-                        <td className="max-w-40 truncate px-4 py-3 font-bold text-crust-900">{c.name}</td>
-                        <td className="px-4 py-3 text-crust-700" dir="ltr">
-                          {displayPhone(c.phone)}
-                        </td>
-                        <td className="px-4 py-3 text-crust-700/70">{dateFmt.format(new Date(c.createdAt))}</td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <WhatsAppButton
-                              size="sm"
-                              href={waLink(c.phone, renderMessage(settings.messageTemplate, c.name, settings))}
-                              label={`שליחת הודעה ל${c.name}`}
-                            />
-                            <a
-                              href={menuLink ? waLink(c.phone, menuMessage(settings.businessName, menuLink, c.name)) : "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title={`שליחת התפריט ל${c.name}`}
-                              aria-label={`שליחת התפריט ל${c.name}`}
-                              className={`${actionBtn} inline-flex text-crust-700/50 transition hover:bg-cheese-400/15 hover:text-cheese-500`}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v7a2.5 2.5 0 01-5 0V3M4.5 10v11M20 3c-2 1-3 3.2-3 6v5h3v7M20 3v11" />
-                              </svg>
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => startEdit(c)}
-                              title={`עריכת ${c.name}`}
-                              aria-label={`עריכת ${c.name}`}
-                              className={`${actionBtn} text-crust-700/50 hover:bg-cheese-400/15 hover:text-cheese-500`}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.9l3.6 3.6L8.4 19.2 4 20l.8-4.4L16.5 3.9z" />
-                              </svg>
-                            </button>
-                            <a
-                              href={`/admin/card/${c.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title={`הדפסת כרטיס ${c.name}`}
-                              aria-label={`הדפסת כרטיס ${c.name}`}
-                              className={`${actionBtn} inline-flex text-crust-700/50 hover:bg-basil-500/10 hover:text-basil-600`}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2m-10-2h10v6H7v-6z" />
-                              </svg>
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => remove(c)}
-                              title={`מחיקת ${c.name}`}
-                              aria-label={`מחיקת ${c.name}`}
-                              className={`${actionBtn} text-crust-700/40 hover:bg-tomato-500/10 hover:text-tomato-600`}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-                                <path strokeLinecap="round" d="M5 7h14M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2m3 0v12a1 1 0 01-1 1H8a1 1 0 01-1-1V7m4 4v6m4-6v6" />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             )}
           </div>
