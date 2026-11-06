@@ -30,6 +30,16 @@ export default async function HomePage() {
           <div className="mx-auto mt-5 w-fit rounded-full bg-cheese-400/15 px-6 py-2.5 font-bold text-cheese-300 ring-1 ring-cheese-400/30">
             🎁 {settings.discountPercent}% הנחה לחברי המועדון
           </div>
+          <a
+            href="/pizza"
+            className="mx-auto mt-4 flex w-fit items-center gap-3 rounded-2xl bg-gradient-to-br from-tomato-400 to-tomato-600 px-6 py-3.5 font-extrabold text-white shadow-lg shadow-tomato-600/25 transition hover:brightness-110 active:scale-[0.98]"
+          >
+            <span className="text-2xl">🍕</span>
+            <span>
+              בנו פיצה אישית בתלת-ממד
+              <span className="mt-0.5 block text-xs font-bold text-white/70">בחרו תוספות, גררו על הפיצה — והזמינו</span>
+            </span>
+          </a>
         </header>
 
         <div className="anim-fade-up w-full [animation-delay:0.15s]">
